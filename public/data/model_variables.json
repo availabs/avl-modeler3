@@ -1,0 +1,874 @@
+{  
+   "HHBASE":{
+      "name":"Total Housing Units(BG)",
+      "comment": "qa check passed",
+      "synpop_type":"households",
+      "var": "HHBASE",
+      "acs_type":"BG",
+      "acs_vars":{
+        "":["B25001_001E"]
+      },
+      "binsCompare":[
+        {"name":"", "comp": "return v"}
+     ],
+      "target":"num_hh",
+      "required":true,
+      "importance": 100000,
+      "expression": ["(households.WGTP > 0) & (households.WGTP < np.inf)"],
+      "setting":{
+         "INTEGERIZE_WITH_BACKSTOPPED_CONTROLS": true,
+         "SUB_BALANCE_WITH_FLOAT_SEED_WEIGHTS": false,
+         "GROUP_BY_INCIDENCE_SIGNATURE": true,
+         "USE_SIMUL_INTEGERIZER": true,
+         "USE_CVXPY": false,
+         "max_expansion_factor": 30,
+         "geographies": [
+           "REGION",
+           "PUMA",
+           "TRACT",
+           "BG"
+         ],
+         "seed_geography": "PUMA",
+         "trace_geography": {
+           "BG": 9711002,
+           "TRACT": 971100
+
+         },
+         "data_dir": "data",
+         "input_table_list": [
+           {
+             "tablename": "households",
+             "filename": "seed_households.csv",
+             "index_col": "hh_id",
+             "rename_columns": {
+               "hhnum": "hh_id"
+             }
+           },
+           {
+             "tablename": "persons",
+             "filename": "seed_persons.csv",
+             "rename_columns": {
+               "hhnum": "hh_id",
+               "SPORDER": "per_num"
+             }
+           },
+           {
+             "tablename": "geo_cross_walk",
+             "filename": "geo_cross_walk.csv",
+             "column_map": {
+               "TRACTCE": "TRACT"
+             }
+           },
+           {
+             "tablename": "BG_control_data",
+             "filename": "control_totals_bg.csv"
+           },
+           {
+             "tablename": "TRACT_control_data",
+             "filename": "control_totals_tract.csv"
+           }
+         ],
+         "household_weight_col": "WGTP",
+         "household_id_col": "hh_id",
+         "total_hh_control": "num_hh",
+         "control_file_name": "controls.csv",
+         "output_tables": {
+           "action": "include",
+           "tables": [
+             "summary_BG",
+             "summary_TRACT",
+             "summary_BG_PUMA",
+             "expanded_household_ids"
+           ]
+         },
+         "output_synthetic_population": {
+           "household_id": "household_id",
+           "households": {
+             "filename": "synthetic_households.csv",
+             "columns": [
+               "NP",
+               "HINCP",
+               "WIF",
+               "VEH",
+               "GASP",
+               "RNTP",
+               "YBL",
+               "HHT"
+             ]
+           },
+           "persons": {
+             "filename": "synthetic_persons.csv",
+             "columns": [
+               "AGEP",
+               "SEX",
+               "CIT",
+               "PINCP",
+               "JWMNP",
+               "JWRIP",
+               "JWTRNS",
+               "SCHL",
+               "COW",
+               "SCHG",
+               "ESR",
+               "WKHP",
+               "SPORDER",
+               "ptype",
+               "pemploy",
+               "pstudent",
+               "per_num"
+
+             ]
+           }
+         },
+         "models": [
+           "input_pre_processor",
+           "setup_data_structures",
+           "initial_seed_balancing",
+           "meta_control_factoring",
+           "final_seed_balancing",
+           "integerize_final_seed_weights",
+           "sub_balancing.geography=TRACT",
+           "sub_balancing.geography=BG",
+           "expand_households",
+           "write_data_dictionary",
+           "summarize",
+           "write_tables",
+           "write_synthetic_population"
+         ],
+         "resume_after": null
+       }
+   },
+
+   "POPBASE":{
+      "name":"Total Population(BG)",
+      "comment": "qa check passed",
+      "synpop_type":"households",
+      "var": "POPBASE",
+      "acs_type":"BG",
+      "acs_vars":{
+        "":["B01003_001E"]
+      },
+     "binsCompare":[
+        {"name":"", "comp": "return v"}
+     ],
+     "required":true,
+     "importance": 100000,
+     "expression": ["(households.WGTP > 0) & (households.WGTP < np.inf)"]
+   },
+   "HHBASE_Tract":{
+      "name":"Total Housing Units(Tracts)",
+      "comment": "qa check passed",
+      "synpop_type":"households",
+      "var": "HHBASE",
+      "acs_type":"Tract",
+      "acs_vars":{
+        "":["B25001_001E"]
+      },
+     "binsCompare":[
+        {"name":"", "comp": "return v"}
+     ],
+     "required":true,
+     "importance": 100000,
+     "expression": ["(households.WGTP > 0) & (households.WGTP < np.inf)"]
+   },
+
+
+   "POPBASE_Tract":{
+      "name":"Total Population(Tracts)",
+      "comment": "qa check passed",
+      "synpop_type":"households",
+      "var": "POPBASE",
+      "acs_type":"Tract",
+      "acs_vars":{
+        "":["B01003_001E"]
+      },
+     "binsCompare":[
+        {"name":"", "comp": "return v"}
+     ],
+     "required":true,
+     "importance": 100000,
+     "expression": ["(households.WGTP > 0) & (households.WGTP < np.inf)"]
+   },
+
+
+
+    "HINCP":{
+       "name":"Household Income",
+       "comment": "qa check passed",
+       "synpop_type":"households",
+       "var": "HINCP",
+       "acs_type":"BG",
+       "acs_vars":{
+         "15000":["B19001_002E","B19001_003E"],
+         "25000":["B19001_004E","B19001_005E"],
+         "35000":["B19001_006E","B19001_007E"],
+         "45000":["B19001_008E","B19001_009E"],
+         "60000":["B19001_010E","B19001_011E"],
+         "75000":["B19001_012E"],
+        "125000":["B19001_013E","B19001_014E"],
+        "125000+":["B19001_015E","B19001_016E", "B19001_017E"]
+       },
+      "binsCompare":[
+         {"name":"< 15,000", "comp": "return v < 15000"},
+         {"name":"< 25,000", "comp": "return v >= 15000 && v < 25000"},
+         {"name":"< 35,000", "comp": "return v >= 25000 && v < 35000"},
+         {"name":"< 45,000", "comp": "return v >= 35000 && v < 45000"},
+         {"name":"< 60,000", "comp": "return v >= 45000 && v < 60000"},
+         {"name":"< 75,000", "comp": "return v >= 60000 && v < 75000"},
+         {"name":"< 125,000", "comp": "return v >= 75000 && v < 125000"},
+         {"name":"> 125,000", "comp": "return v >= 125000"}
+      ],
+      "importance": 5000,
+      "expression": ["(households.HINCP > -999999999) & (households.HINCP <= 15000)",
+      "(households.HINCP >15000) & (households.HINCP <= 25000)",
+      "(households.HINCP > 25000) & (households.HINCP <= 35000)",
+     " (households.HINCP > 35000) & (households.HINCP <= 45000)",
+      "(households.HINCP > 45000) & (households.HINCP <= 60000)",
+      "(households.HINCP > 60000) & (households.HINCP <= 75000)",
+      "(households.HINCP > 75000) & (households.HINCP <= 125000)",
+      "(households.HINCP > 125000) & (households.HINCP <= 999999999)"
+      ]
+    },
+
+    "VEH":{
+         "name":"Household Vehicles Available",
+         "synpop_type":"households",
+         "comment": "qa check passed",
+         "var": "VEH",
+         "acs_type":"BG",
+         "acs_vars":{ 
+            "0" : ["B25044_003E", "B25044_010E"], 
+            "1": ["B25044_004E", "B25044_011E"],
+            "2" : ["B25044_005E", "B25044_012E"],
+            "3" : ["B25044_006E", "B25044_007E","B25044_008E", "B25044_013E","B25044_014E","B25044_015E"]
+         },
+         "binsCompare":[
+          {"name":"0 vehicle", "comp": "return v === 0" },
+          {"name":"1 vehicle", "comp": "return v === 1" },
+          {"name":"2 vehicles", "comp": "return v === 2"  },
+          {"name":"3+ vehicles", "comp": "return v >= 3"  }
+         ],
+         "importance": 1000,
+         "expression": ["households.VEH == 0 ",
+         "households.VEH == 1",
+         "households.VEH == 2",
+         "(households.VEH == 3) & (households.VEH <= 999999999)"
+         ]
+       
+    },
+
+    "WIF":{
+      "name":"Workers in Family",
+      "synpop_type":"households",
+      "comment": "qa check semi passed-synpop n/a b not included",
+      "var": "WIF",
+      "acs_type":"BG",
+      "acs_vars":{ 
+      "0" : ["B08202_002E"],
+      "1": ["B08202_003E"],
+      "2" : ["B08202_004E"],
+      "3+" : ["B08202_005E"]
+         },
+   
+   
+      "binsCompare":[
+         {"name":"No workers", "comp":"return v === 0" },
+         {"name":"1 workers", "comp":"return v === 1" },
+         {"name":"2 workers", "comp":"return v === 2" },
+         {"name":"3+ workers", "comp":"return v === 3" }
+      ],
+      "importance": 1000,
+      "expression": ["households.WIF == 0 ",
+      "households.WIF == 1",
+      "households.WIF == 2",
+      "(households.WIF == 3) & (households.WIF <= 999999999)"
+      ]
+   },
+
+    "YBL":{
+      "name":"Year Structure Built",
+      "synpop_type":"households",
+      "comment": "qa check passed",
+      "var": "YBL",
+      "acs_type":"BG",
+      "acs_vars":{ 
+         "1939":["B25034_011E"],
+         "1949":["B25034_010E"],
+         "1959":["B25034_009E"],
+         "1969":["B25034_008E"],
+         "1979":["B25034_007E"],
+         "1989":["B25034_006E"],
+         "1999":["B25034_005E"],
+         "2009":["B25034_004E"],
+         "2013":["B25034_003E"],
+         "2014+":["B25034_002E"]
+         },
+
+      "binsCompare":[
+         {"name":"<= 1939", "comp":"return v === 1" },   
+         {"name":"<= 1949", "comp":"return v === 2" },       
+         {"name":"<= 1959", "comp":"return v === 3" },    
+         {"name":"<= 1969", "comp":"return v === 4" },    
+         {"name":"<= 1979", "comp":"return v === 5" },    
+         {"name":"<= 1989", "comp":"return v === 6" },    
+         {"name":"<= 1999", "comp":"return v === 7" },    
+         {"name":"<= 2009", "comp":"return v > 7 && v <= 13" },   
+         {"name":"<= 2013", "comp":"return v > 13 && v <= 17" },    
+         {"name":"<= 2019", "comp":"return v > 17"}    
+      ],
+      "importance": 1000,
+      "expression": ["households.YBL == 1 ",
+      "households.YBL == 2",
+      "households.YBL == 3",
+      "households.YBL == 4 ",
+      "households.YBL == 5",
+      "households.YBL == 6",
+      "households.YBL == 7",
+      "(households.YBL > 7 ) & (households.YBL <= 13)",
+      "(households.YBL > 13) & (households.YBL <= 17)",
+      "households.YBL > 17"
+      ]
+   
+   },
+
+   "RNTP":{
+     "name":"Monthly Rent in Household",
+     "synpop_type":"households",
+     "comment": "qa check semi passed",
+     "var": "RNTP",
+     "acs_type":"BG",
+     "acs_vars":{ 
+        "300":["B25063_003E","B25063_004E", "B25063_005E","B25063_006E","B25063_007E","B25061_002E","B25061_003E","B25061_004E", "B25061_005E","B25061_006E"],
+        "500":["B25063_008E","B25063_009E","B25063_010E","B25063_011E","B25061_017E","B25061_008E","B25061_009E","B25061_010E"],
+        "700":["B25063_012E","B25063_013E","B25063_014E","B25063_015E","B25061_011E","B25061_012E","B25061_013E","B25061_014E"],
+        "900":["B25063_016E", "B25063_017E","B25063_018E","B25061_017E","B25061_016E", "B25061_017E"],
+        "1500":["B25063_019E", "B25063_020E","B25063_021E","B25061_018E","B25061_019E", "B25061_020E"],
+        "99999":["B25063_022E","B25063_023E","B25063_024E","B25063_025E","B25063_026E","B25061_021E","B25061_022E","B25061_023E","B25061_024E","B25061_025E"]
+      },
+      "acs_vars_contract_cash_asked":{ 
+         "300":["B25056_003E","B25056_004E", "B25056_005E","B25056_006E","B25056_007E","B25063_003E","B25063_004E", "B25063_005E","B25063_006E","B25063_007E","B25061_002E","B25061_003E","B25061_004E", "B25061_005E","B25061_006E"],
+         "500":["B25056_008E","B25056_009E","B25056_010E","B25056_011E","B25063_008E","B25063_009E","B25063_010E","B25063_011E","B25061_017E","B25061_008E","B25061_009E","B25061_010E"],
+         "700":["B25056_012E","B25056_013E","B25056_014E","B25056_015E","B25063_012E","B25063_013E","B25063_014E","B25063_015E","B25061_011E","B25061_012E","B25061_013E","B25061_014E"],
+         "900":["B25056_016E", "B25056_017E","B25056_018E","B25063_016E", "B25063_017E","B25063_018E","B25061_017E","B25061_016E", "B25061_017E"],
+         "1500":["B25056_019E", "B25056_020E","B25056_021E","B25063_019E", "B25063_020E","B25063_021E","B25061_018E","B25061_019E", "B25061_020E"],
+         "99999":["B25056_022E","B25056_023E","B25056_024E","B25056_025E","B25056_026E","B25063_022E","B25063_023E","B25063_024E","B25063_025E","B25063_026E","B25061_021E","B25061_022E","B25061_023E","B25061_024E","B25061_025E"]
+       },
+     "binsCompare":
+     [
+        {"name":"<= 300", "comp":"return v <= 300"},   
+        {"name":"<= 500", "comp":"return v > 300 && v <= 500" },       
+        {"name":"<= 700", "comp":"return v > 500 && v <= 700" },    
+        {"name":"<= 900", "comp":"return v > 700 && v <= 900" },    
+        {"name":"<= 1500", "comp":"return v > 900 && v <= 1500" },    
+        {"name":"> 1500", "comp":"return v > 1500" } 
+         
+
+     ],
+     "importance": 1000,
+     "expression": ["households.RNTP  <= 300",
+     "(households.RNTP > 300 ) & (households.RNTP <= 500)",
+     "(households.RNTP > 500) & (households.RNTP <= 700",
+     "(households.RNTP > 700 ) & (households.RNTP <= 900)",
+     "(households.RNTP > 900) & (households.RNTP <= 1500)",
+     "households.RNTP > 1500"
+     ]
+  
+  },
+
+
+
+   "NP":{
+      "name":"Number of Person in Household",
+      "synpop_type":"households",
+      "comment": "qa check passed",
+      "var": "NP",
+      "acs_type":"BG",
+      "acs_vars":{ 
+         "0": ["B25004_001E"],
+         "1": ["S2501_C01_002E"],
+         "2" : ["S2501_C01_003E"],
+         "3" : ["S2501_C01_004E"],
+         "4+" : ["S2501_C01_005E"]
+      
+         },
+      
+    
+
+      "binsCompare":[
+          {"name":" 0 person", "comp": "return v === 0" },
+         {"name":" 1 person", "comp": "return v === 1" },
+         {"name":"2 person",  "comp": "return v === 2" },
+         {"name":"3 person",  "comp": "return v === 3" },
+         {"name":"4+ person", "comp": "return v >= 4" }
+
+      ],
+      "importance": 1000,
+      "expression": ["households.NP == 0",
+      "households.NP == 1",
+      "households.NP == 2",
+      "households.NP == 3",
+      "households.NP >= 4"
+      ]
+   },
+
+
+
+   "GASP":{
+      "name":"Monthly GAS Cost in Household",
+      "synpop_type":"households",
+      "comment": "qa check not passed - no hh gas cost by count but total hh gas cost value only",
+      "var": "GASP",
+      "acs_type":"",
+      "acs_vars":{ 
+         "50":[""],
+         "100":[""],
+         "200":[""],
+         "300":[""],
+         "500":[""],
+         "999":[""]
+         
+         },
+      "acs_vars_value":{ 
+         "value":["B25117_003E","B25117_004E", "B25117_013E", "B25117_014E" ]
+         
+         },
+
+   
+      "binsCompare":
+      [
+         {"name":"<= 50", "comp":"return v <= 50" },   
+         {"name":"<= 100", "comp":"return v > 50 && v <= 100" },       
+         {"name":"<= 200", "comp":"return v > 100 && v <= 200" },    
+         {"name":"<= 300", "comp":"return v > 200 && v <= 300" },    
+         {"name":"<= 500", "comp":"return v > 300 && v <= 500" },    
+         {"name":"> 500", "comp":"return v > 500" } 
+            
+
+      ],
+      "importance": 1000,
+      "expression": ["households.GASP <= 50",
+         "(households.GASP > 50 ) & (households.GASP <= 100)",
+         "(households.GASP > 100) & (households.GASP <= 200",
+         "(households.GASP > 200 ) & (households.GASP <= 300)",
+         "(households.GASP > 300) & (households.GASP <= 500)",
+      "households.GASP > 500"
+      ]
+   },
+
+   "SEX":{
+      "name":"SEX",
+      "synpop_type":"persons",
+      "comment": "qa check passed",
+      "var": "SEX",
+      "acs_type":"BG",
+      "acs_vars":{ 
+         "Male":["B01001_002E"],
+         "Female":["B01001_026E"]
+         
+         },
+      
+      
+      "binsCompare":
+      [
+         {"name":"Male", "comp":"return v === 1" },   
+         {"name":"Female", "comp":"return v === 2" }
+            
+
+      ],
+      "importance": 1000,
+      "expression": [ "households.SEX == 1 ",
+      "households.SEX == 2"
+      ]
+   },
+
+   "JWMNP":{
+      "name":"Travel time to work",
+      "synpop_type":"persons",
+      "comment": "qa check passed-there are a few other ttw variable but bigger values",
+      "var": "JWMNP",
+      "acs_type":"Tract",
+      "acs_vars":{ 
+      "9" : ["B08012_002E","B08012_003E"],
+      "19": ["B08012_004E","B08012_005E"],
+      "29" : ["B08012_006E","B08012_007E"],
+      "39" : ["B08012_008E","B08012_009E"],
+      "59" : ["B08012_010E","B08012_011E"],
+      "89" : ["B08012_012E"],
+      "90+" : ["B08012_013E"]
+         },
+   
+   
+      "binsCompare":[
+         {"name":"<= 9 min  ", "comp":"return v <= 9" },   
+         {"name":"<= 19 min  ", "comp":"return v > 9 && v <= 19" },
+         {"name":"<= 29 min  ", "comp":"return v > 19 && v <= 29" },   
+         {"name":"<= 39 min  ", "comp":"return v > 29 && v <= 39" },   
+         {"name":"<= 59 min  ", "comp":"return v > 39 && v <= 59" },
+         {"name":"<= 89 min  ", "comp":"return v > 59 && v <= 89" }, 
+         {"name":"90+ min  ", "comp":"return v > 89" }
+      ],
+      "importance": 1000,
+      "expression": ["persons.JWMNP  <= 9",
+      "(persons.JWMNP > 9 ) & (persons.JWMNP <= 19)",
+      "(persons.JWMNP > 19) & (persons.JWMNP <= 29",
+      "(persons.JWMNP > 29 ) & (persons.JWMNP <= 39)",
+      "(persons.JWMNP > 39) & (persons.JWMNP <= 59)",
+      "(persons.JWMNP > 59) & (persons.JWMNP <= 89)",
+      "persons.JWMNP > 89"
+      ]
+   },
+
+   "AGEP":{
+      "name":"Age",
+      "synpop_type":"persons",
+      "comment": "qa check NOT passed-- female and male combined but much less acs",
+      "var": "AGEP",
+      "acs_type":"BG",
+      "acs_vars":{  
+         "9":["B01001_003E","B01001_004E",
+              "B01001_027E","B01001_028E"],
+         "19":["B01001_005E","B01001_006E","B01001_007E",
+              "B01001_029E","B01001_030E","B01001_031E"],
+         "29":["B01001_008E","B01001_009E","B01001_010E","B01001_011E",
+              "B01001_032E","B01001_033E","B01001_034E","B01001_035E"],
+         "39":["B01001_012E","B01001_013E",
+              "B01001_036E","B01001_037E"],
+         "49":["B01001_014E","B01001_015E",
+              "B01001_038E","B01001_039E"],
+         "59":["B01001_016E","B01001_017E",
+              "B01001_040E","B01001_041E"],
+         "69":["B01001_018E","B01001_019E","B01001_020E","B01001_021E",
+              "B01001_042E","B01001_043E","B01001_044E","B01001_045E"],
+         "79":["B01001_022E","B01001_023E",
+               "B01001_046E","B01001_047E"],
+         "over80":["B01001_024E","B01001_025E",
+                  "B01001_048E","B01001_049E"]
+         },
+   
+  
+   
+      "binsCompare":[ 
+         {"name":"<= 9 years", "comp":"return v <= 9" },   
+         {"name":"<= 19 years", "comp":"return v > 9 && v <= 19" },
+         {"name":"<= 29 years", "comp":"return v > 19 && v <= 29" },   
+         {"name":"<= 39 years", "comp":"return v > 29 && v <= 39" },   
+         {"name":"<= 49 years", "comp":"return v > 39 && v <= 49" },
+         {"name":"<= 59 years", "comp":"return v > 49 && v <= 59" }, 
+         {"name":"<= 69 years", "comp":"return v > 59 && v <= 69 "},   
+         {"name":"<= 79 years", "comp":"return v > 69 && v <= 79" },
+         {"name":"80+ years", "comp":"return v > 79" }
+      ],
+      "importance": 1000,
+      "expression": ["persons.AGEP  <= 9 ",
+      "(persons.AGEP > 9 ) & (persons.AGEP <= 19)",
+      "(persons.AGEP > 19) & (persons.AGEP <= 29)",
+      "(persons.AGEP > 29 ) & (persons.AGEP <= 39)",
+      "(persons.AGEP > 39) & (persons.AGEP <= 49)",
+      "(persons.AGEP > 49) & (persons.AGEP <= 59)",
+      "(persons.AGEP > 59) & (persons.AGEP <= 69)",
+      "(persons.AGEP > 69) & (persons.AGEP <= 79)",
+      "persons.AGEP > 79"
+      ]
+   },
+
+   "JWRIP":{
+      "name":"Vehicle occupancy",
+      "synpop_type":"persons",
+      "comment": "qa check NOT passed-- allocated not allocated not quite clear and # is very diff. N/A too big",
+      "var": "JWRIP",
+      "acs_type":"BG",
+      "acs_vars":{ 
+      "N/A" : ["B99082_005E"],
+      "0": ["B99082_004E"],
+      "1" : ["B99082_003E"]
+         },
+
+   
+      "binsCompare":[
+         {"name":" N/A ( not a worker or public transportaion", "comp":"return v === 0" },   
+         {"name":" Drive alone", "comp":"return v === 1" },
+         {"name":" Allocated(Car-pool)", "comp":"return v > 1 && v <=10" }
+      ],
+      "importance": 1000,
+      "expression": ["persons.JWRIP == 0 ",
+      "persons.JWRIP == 1 ",
+      "(persons.JWRIP > 2) & (persons.JWRIP <= 10)"
+      ]
+   },
+
+   "COW":{
+      "name":"Class of worker",
+      "synpop_type":"persons",
+      "comment": "qa check passed",
+      "var": "COW",
+      "acs_type":"Tract",
+      "acs_vars":{ 
+      
+      "1":["B08128_003E"],
+      "2":["B08128_005E"],
+      "3":["B08128_006E"],
+      "4":["B08128_007E"],
+      "5":["B08128_008E"],
+      "6":["B08128_009E"],
+      "7":["B08128_004E"],
+      "8":["B08128_010E"],
+      "N/A" : [""]
+         },
+   
+   
+      "binsCompare":[
+     
+         {"name":"Private for-profit wage and salary workers", "comp":"return v === 1" },
+         {"name":"Private not-for-profit wage and salary workers", "comp":"return v === 2" },
+         {"name":"Local government workers", "comp":"return v === 3" },
+         {"name":"State government workers", "comp":"return v === 4" },
+         {"name":"Federal government workers", "comp":"return v === 5" },
+         {"name":"Self-employed in own not incorporated business workers", "comp":"return v === 6" },
+         {"name":"Self-employed in own incorporated business workers", "comp":"return v === 7" },
+         {"name":"Unpaid family workers", "comp":"return v === 8" },
+         {"name":"N/A (not in universe)", "comp":"return v === 0" }
+      
+      ],
+      "importance": 1000,
+      "expression": [
+      "persons.COW == 1 ",
+      "persons.COW == 2 ",
+      "persons.COW == 3 ",
+      "persons.COW == 4 ",
+      "persons.COW == 5 ",
+      "persons.COW == 6 ",
+      "persons.COW == 7 ",
+      "persons.COW == 8 ",
+      "persons.COW == 1 ",
+      "persons.COW == 0 "
+      
+      ]
+   }, 
+   
+   "PINCP":{
+      "name":"Person's Income",
+      "synpop_type":"persons",
+      "comment": "qa check NOT passed-- there are per capita income but it is total value only or by race ",
+      "var": "PINCP",
+      "acs_type":"BG",
+      "acs_vars":{
+        "15000":["B19001_002E","B19001_003E"],
+        "25000":["B19001_004E","B19001_005E"],
+        "35000":["B19001_006E","B19001_007E"],
+        "45000":["B19001_008E","B19001_009E"],
+        "60000":["B19001_010E","B19001_011E"],
+        "75000":["B19001_012E"],
+       "125000":["B19001_013E","B19001_014E"],
+       "125000+":["B19001_015E","B19001_016E", "B19001_017E"]
+
+      },
+   
+   
+   
+     "binsCompare":[
+       {"name":"< 15,000", "comp": "return v >= 1 && v <= 14999"},
+       {"name":"< 25,000", "comp": "return v > 14999 && v <= 24999"},
+       {"name":"< 35,000", "comp": "return v > 24999 && v <= 34999"},
+       {"name":"< 45,000", "comp": "return v > 34999 && v <= 44999"},
+       {"name":"< 60,000", "comp": "return v > 44999 && v <= 59999"},
+       {"name":"< 75,000", "comp": "return v > 59999 && v <= 74999"},
+       {"name":"< 125,000", "comp":"return v > 74999 && v <=  124999"},
+       {"name":"> 125,000", "comp":"return v > 124999"}
+ 
+    ],
+    "importance": 1000,
+    "expression": ["(persons.PINCP >= 1 ) & (persons.PINCP <= 14999)",
+    "(persons.PINCP > 14999 ) & (persons.PINCP <= 24999)",
+    "(persons.PINCP > 24999) & (persons.PINCP <= 34999",
+    "(persons.PINCP > 34999 ) & (persons.PINCP <= 44999)",
+    "(persons.PINCP > 44999) & (persons.PINCP <= 5999)",
+    "(persons.PINCP > 5999) & (persons.PINCP <= 74999)",
+    "(persons.PINCP > 74999) & (persons.PINCP <= 124999)",
+    "persons.PINCP > 124999"
+    ]
+      
+      
+   },
+   "JWTRNS":{
+      "name":"Means of transportation to work",
+      "synpop_type":"persons",
+      "comment": "qa check passed",
+      "var": "JWTRNS",
+      "acs_type":"Tract",
+      "acs_vars":{ 
+      
+      "1":["B08006_002E"],
+      "2":["B08006_009E"],
+      "3":["B08006_011E"],
+      "4":["B08006_012E"],
+      "5":["B08006_010E"],
+      "6":["B08006_013E"],
+      "8":["B08006_016E"],
+      "9":["B08006_014E"],
+      "10":["B08006_015E"],
+      "11":["B08006_017E"]
+         },
+   
+   
+      "binsCompare":[
+     
+         {"name":"Car, truck, or van", "comp":"return v === 1" },
+         {"name":"Bus", "comp":"return v === 2" },
+         {"name":"Subway or elevated rail", "comp":"return v === 3" },
+         {"name":"Long-distance train or commuter rail", "comp":"return v === 4" },
+         {"name":"Light rail, streetcar or trolley (carro público in Puerto Rico)", "comp":"return v === 5" },
+         {"name":"Ferryboat", "comp":"return v === 6" },
+         {"name":"Taxicab, motorcycle, or other means", "comp":"return v === 8" },
+         {"name":"Bicycle", "comp":"return v === 9" },
+         {"name":"Walked", "comp":"return v === 10" },
+         {"name":"Worked from home", "comp":"return v === 11"}
+      
+      ],
+      "importance": 1000,
+      "expression": [
+      "persons.JWTRNS == 1 ",
+      "persons.JWTRNS == 2 ",
+      "persons.JWTRNS == 3 ",
+      "persons.JWTRNS == 4 ",
+      "persons.JWTRNS == 5 ",
+      "persons.JWTRNS == 6 ",
+      "persons.JWTRNS == 7 ",
+      "persons.JWTRNS == 8 ",
+      "persons.JWTRNS == 9 ",
+      "persons.JWTRNS == 10 ",
+      "persons.JWTRNS == 11 ",
+      "persons.JWTRNS == 0 "
+      
+      ]
+   },
+   "CIT":{
+      "name":"Citizenship status",
+      "synpop_type":"persons",
+      "comment": "qa check passed",
+      "var": "CIT",
+      "acs_type":"Tract",
+      "acs_vars":{ 
+      "1" : ["B05001_002E"],
+      "2": ["B05001_003E"],
+      "3" : ["B05001_004E"],
+      "4": ["B05001_005E"],
+      "5" : ["B05001_006E"]
+         },
+   
+   
+      "binsCompare":[
+         {"name":"born in the United States", "comp":"return v === 1" },   
+         {"name":"born in Puerto Rico or U.S. Island Areas", "comp":"return v === 2" },
+         {"name":"born abroad of American parent(s)", "comp":"return v === 3" },
+         {"name":"U.S. citizen by naturalization", "comp":"return v === 4" },
+         {"name":"Not a U.S. citizen", "comp":"return v === 5" }
+      ],
+      "importance": 1000,
+      "expression": [
+      "persons.CIT == 1 ",
+      "persons.CIT == 2 ",
+      "persons.CIT == 3 ",
+      "persons.CIT == 4 ",
+      "persons.CIT == 5 "
+      ]
+   },
+
+   "SCHL":{
+      "name":"Educational attainment",
+      "synpop_type":"persons",
+      "comment": "qa check NOT passed--not sure why acs( EA over 25 )  a lot higher ",
+      "var": "SCHL",
+      "acs_type":"Tract",
+      "acs_vars":{ 
+         "1":["B15003_002E"],
+         "2":["B15003_003E"],
+         "3":["B15003_004E"],
+         "4":["B15003_005E"],
+         "5":["B15003_006E"],
+         "6":["B15003_007E"],
+         "7":["B15003_008E"],
+         "8":["B15003_009E"],
+         "9":["B15003_010E"],
+         "10":["B15003_011E"],
+         "11":["B15003_012E"],
+         "12":["B15003_013E"],
+         "13":["B15003_014E"],
+         "14":["B15003_015E"],
+         "15":["B15003_016E"],
+         "16":["B15003_017E"],
+         "17":["B15003_018E"],
+         "18":["B15003_019E"],
+         "19":["B15003_020E"],
+         "20":["B15003_021E"],
+         "21":["B15003_022E"],
+         "22":["B15003_023E"],
+         "23":["B15003_024E"],
+         "24":["B15003_025E"],
+         "N/A" : [""]
+         },
+   
+    
+   
+      "binsCompare":
+      [
+         {"name":" No schooling completed", "comp":"return v === 1" },   
+         {"name":" Nursery school", "comp":"return v === 2" },       
+         {"name":" Kindergarten", "comp":"return v === 3" },    
+         {"name":" 1st grade", "comp":"return v === 4" },   
+         {"name":" 2nd grade", "comp":"return v === 5" }, 
+         {"name":" 3rd grade", "comp":"return v === 6" },
+         {"name":" 4th grade", "comp":"return v === 7" },
+         {"name":" 5th grade", "comp":"return v === 8" },   
+         {"name":" 6th grade", "comp":"return v === 9" }, 
+         {"name":" 7th grade", "comp":"return v === 10" },
+         {"name":" 8th grade", "comp":"return v === 11" },
+         {"name":" 9th grade", "comp":"return v === 12" },   
+         {"name":" 10th grade", "comp":"return v === 13" }, 
+         {"name":" 11th grade", "comp":"return v === 14" },
+         {"name":" 12th grade, no diploma", "comp":"return v === 15" },
+         {"name":" Regular high school diploma", "comp":"return v === 16" },    
+         {"name":" GED or alternative credential", "comp":"return v === 17" },    
+         {"name":" Some college, less than 1 year", "comp":"return v === 18" },    
+         {"name":" Some college, 1 or more years, no degree", "comp":"return v === 19" },   
+         {"name":" Associate's degree", "comp":"return v === 20" },    
+         {"name":" Bachelor's degree", "comp":"return v === 21"},
+         {"name":" Master's degree", "comp":"return v === 22" },   
+         {"name":" Professional school degree", "comp":"return v === 23" },    
+         {"name":" Doctorate degree", "comp":"return v === 24"},
+         {"name":" N/A", "comp":"return v === 0"}        
+
+      ],
+      "importance": 1000,
+      "expression": [
+      "persons.SCHL == 1 ",
+      "persons.SCHL == 2 ",
+      "persons.SCHL == 3 ",
+      "persons.SCHL == 4 ",
+      "persons.SCHL == 5 ",
+      "persons.SCHL == 6 ",
+      "persons.SCHL == 7 ",
+      "persons.SCHL == 8 ",
+      "persons.SCHL == 9 ",
+      "persons.SCHL == 10 ",
+      "persons.SCHL == 11 ",
+      "persons.SCHL == 12 ",
+      "persons.SCHL == 13 ",
+      "persons.SCHL == 14 ",
+      "persons.SCHL == 15 ",
+      "persons.SCHL == 16 ",
+      "persons.SCHL == 17 ",
+      "persons.SCHL == 18 ",
+      "persons.SCHL == 19 ",
+      "persons.SCHL == 20 ",
+      "persons.SCHL == 21 ",
+      "persons.SCHL == 22 ",
+      "persons.SCHL == 23 ",
+      "persons.SCHL == 24 ",
+      "persons.SCHL == 0 "
+      
+      ]
+   
+   }
+
+
+}

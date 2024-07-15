@@ -1,0 +1,243 @@
+[
+    {
+        "target": "num_hh",
+        "geography": "BG",
+        "seed_table": "households",
+        "importance": 100000,
+        "control_field": "HHBASE",
+        "expression": "(households.WGTP > 0) & (households.WGTP < np.inf)"
+    },
+    {
+        "target": "hh_size_1",
+        "geography": "BG",
+        "seed_table": "households",
+        "importance": 5000,
+        "control_field": "HHSIZE1",
+        "expression": "households.NP == 1"
+    },
+    {
+        "target": "hh_size_2",
+        "geography": "BG",
+        "seed_table": "households",
+        "importance": 5000,
+        "control_field": "HHSIZE2",
+        "expression": "households.NP == 2"
+    },
+    {
+        "target": "hh_size_3",
+        "geography": "BG",
+        "seed_table": "households",
+        "importance": 5000,
+        "control_field": "HHSIZE3",
+        "expression": "households.NP == 3"
+    },
+    {
+        "target": "hh_size_4_plus",
+        "geography": "BG",
+        "seed_table": "households",
+        "importance": 5000,
+        "control_field": "HHSIZE4",
+        "expression": "households.NP == 4"
+        
+    },
+    {
+        "target": "hh_age_15_24",
+        "geography": "BG",
+        "seed_table": "households",
+        "importance": 500,
+        "control_field": "HHAGE1",
+        "expression": "(households.AGEHOH > 15) & (households.AGEHOH <= 24)"
+        
+    },
+    {
+        "target": "hh_age_25_54",
+        "geography": "BG",
+        "seed_table": "households",
+        "importance": 500,
+        "control_field": "HHAGE2",
+        "expression": "(households.AGEHOH > 24) & (households.AGEHOH <= 54)"
+        
+    },
+    {
+        "target": "hh_age_55_64",
+        "geography": "BG",
+        "seed_table": "households",
+        "importance": 500,
+        "control_field": "HHAGE3",
+        "expression": "(households.AGEHOH > 54) & (households.AGEHOH <= 64)"
+        
+    },
+    {
+        "target": "hh_age_65_plus",
+        "geography": "BG",
+        "seed_table": "households",
+        "importance": 500,
+        "control_field": "HHAGE4",
+        "expression": "(households.AGEHOH > 64) & (households.AGEHOH <= np.inf)"
+        
+    },
+    {
+        "target": "hh_inc_15",
+        "geography": "BG",
+        "seed_table": "households",
+        "importance": 500,
+        "control_field": "HHINC1",
+        "expression": "(households.HHINCADJ > -999999999) & (households.HHINCADJ <= 21297)"
+        
+    },
+    {
+        "target": "hh_inc_15_30",
+        "geography": "BG",
+        "seed_table": "households",
+        "importance": 500,
+        "control_field": "HHINC2",
+        "expression": "(households.HHINCADJ >21297) & (households.HHINCADJ <= 42593)"
+        
+    },
+    {
+        "target": "hh_inc_30_60",
+        "geography": "BG",
+        "seed_table": "households",
+        "importance": 500,
+        "control_field": "HHINC3",
+        "expression": "(households.HHINCADJ > 42593) & (households.HHINCADJ <= 85185)"
+        
+    },
+    {
+        "target": "hh_inc_60_plus",
+        "geography": "BG",
+        "seed_table": "households",
+        "importance": 500,
+        "control_field": "HHINC4",
+        "expression": "(households.HHINCADJ > 85185) & (households.HHINCADJ <= 999999999)"
+        
+    },
+    {
+        "target": "students_by_family_housing_type",
+        "geography": "BG",
+        "seed_table": "persons",
+        "importance": 500,
+        "control_field": "OSUFAM",
+        "expression": "persons.OSUTAG == 1"
+        
+    },
+    {
+        "target": "students_by_nonfamily_housing_type",
+        "geography": "BG",
+        "seed_table": "persons",
+        "importance": 500,
+        "control_field": "OSUNFAM",
+        "expression": "persons.OSUTAG == 2"
+        
+    },
+    {
+        "target": "hh_wrks_0",
+        "geography": "TRACT",
+        "seed_table": "households",
+        "importance": 100,
+        "control_field": "HHWORK0",
+        "expression": "households.NWESR == 0"
+        
+    },
+    {
+        "target": "hh_wrks_1",
+        "geography": "TRACT",
+        "seed_table": "households",
+        "importance": 100,
+        "control_field": "HHWORK1",
+        "expression": "households.NWESR == 1"
+        
+    },
+    {
+        "target": "hh_wrks_2",
+        "geography": "TRACT",
+        "seed_table": "households",
+        "importance": 100,
+        "control_field": "HHWORK2",
+        "expression": "households.NWESR == 2"
+        
+    },
+    {
+        "target": "hh_wrks_3",
+        "geography": "TRACT",
+        "seed_table": "households",
+        "importance": 100,
+        "control_field": "HHWORK3",
+        "expression": "households.NWESR >= 3"
+        
+    },
+ 
+  
+    {
+        "target": "persons_occ_1",
+        "geography": "REGION",
+        "seed_table": "persons",
+        "importance": 100,
+        "control_field": "OCCP1",
+        "expression": "persons.OCCP == 1"
+        
+    },
+    {
+        "target": "persons_occ_2",
+        "geography": "REGION",
+        "seed_table": "persons",
+        "importance": 100,
+        "control_field": "OCCP2",
+        "expression": "persons.OCCP == 2"
+        
+    },
+    {
+        "target": "persons_occ_3",
+        "geography": "REGION",
+        "seed_table": "persons",
+        "importance": 100,
+        "control_field": "OCCP3",
+        "expression": "persons.OCCP == 3"
+        
+    },
+    {
+        "target": "persons_occ_4",
+        "geography": "REGION",
+        "seed_table": "persons",
+        "importance": 100,
+        "control_field": "OCCP4",
+        "expression": "persons.OCCP == 4"
+        
+    },
+    {
+        "target": "persons_occ_5",
+        "geography": "REGION",
+        "seed_table": "persons",
+        "importance": 100,
+        "control_field": "OCCP5",
+        "expression": "persons.OCCP == 5"
+        
+    },
+    {
+        "target": "persons_occ_6",
+        "geography": "REGION",
+        "seed_table": "persons",
+        "importance": 100,
+        "control_field": "OCCP6",
+        "expression": "persons.OCCP == 6"
+        
+    },
+    {
+        "target": "persons_occ_7",
+        "geography": "REGION",
+        "seed_table": "persons",
+        "importance": 100,
+        "control_field": "OCCP7",
+        "expression": "persons.OCCP == 7"
+        
+    },
+    {
+        "target": "persons_occ_8",
+        "geography": "REGION",
+        "seed_table": "persons",
+        "importance": 100,
+        "control_field": "OCCP8",
+        "expression": "persons.OCCP == 8"
+        
+    }
+]

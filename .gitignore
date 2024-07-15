@@ -22,3 +22,45 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+
+# dependencies
+/node_modules
+/config
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/build
+
+# config
+src/config.json
+*.env
+
+# data
+*.sqlite
+*.zip
+*.csv
+*.sqlite
+test/*.json
+server/popsynth_runs/
+server/test/*
+server/test/test/*
+server/database/
+server/lib/
+server/old/
+public/data/puma_json.json
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
