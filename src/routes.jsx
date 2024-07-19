@@ -1,7 +1,7 @@
 import Home from "./pages/Home";
 import ProjectCreate from "./pages/Project/Create";
 import ProjectView from "./pages/Project/View";
-import DamaRoutes from "./pages/DataManager"
+import DataManager from "./pages/DataManager"
 import {useFalcor} from "./modules/avl-falcor";
 // import { useFalcor } from "./modules/avl-components/src";
 import {
@@ -11,17 +11,37 @@ import {
 import Auth from './pages/auth/index.jsx'
 import NoMatch from "./pages/404";
 
+const DAMA_ARGS = {
+  
+  baseUrl: '/dama',
+  defaultPgEnv:"kari",
+  // dataTypes: transportNYDataTypes,
+  useFalcor,
+  useAuth,
+  navSettings: {
+    topNav: {
+      position: 'fixed',
+      size: 'compact',
+    },
+    sideNav: {
+      size: 'none',
+      color: 'white'
+    },
+  }
+}
+
 const Routes = [
   Home, 
   ProjectCreate, 
   ProjectView, 
-  // ...DamaRoutes({
+  // ...DataManager({
   //           baseUrl:'/dama',
   //           defaultPgEnv : "kari",
-  //           //.navSettings: authMenuConfig,
+  //           // navSettings: authMenuConfig,
   //           useFalcor,
-  //           //useAuth
+  //           useAuth
   //         }),
+  ...DataManager(DAMA_ARGS),
   ...Auth, 
   NoMatch];
 
