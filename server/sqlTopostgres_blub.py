@@ -4,7 +4,8 @@ from sqlalchemy.orm import sessionmaker
 
 # Define SQLAlchemy engine and session
 sqlite_db = 'database/activitysimserver_old.sqlite'
-postgresql_db = 'postgresql://dama_dev_user:57e5b991-630f-4ca8-8078-f552744a2cf1@mercury.availabs.org:5532/kari'
+# postgresql_db = 'postgresql://dama_dev_user:57e5b991-630f-4ca8-8078-f552744a2cf1@mercury.availabs.org:5532/kari'
+postgresql_db = 'postgresql://postgres:1234@neptune.availabs.org:5437/postgres'
 
 sqlite_engine = create_engine(f'sqlite:///{sqlite_db}')
 Session = sessionmaker(bind=sqlite_engine)
@@ -16,7 +17,7 @@ postgres_session = Session()
 
 # Reflect SQLite table schema using MetaData
 metadata = MetaData()
-projects_sqlite = Table('tl_2019_36_bg', metadata, autoload_with=sqlite_engine)
+projects_sqlite = Table('tl_2019_36_puma10', metadata, autoload_with=sqlite_engine)
 
 # Extract columns and their types from SQLite table
 columns = []
@@ -27,8 +28,8 @@ for col in projects_sqlite.columns:
         columns.append(Column(col.name, col.type))
 
 # Define the PostgreSQL table with schema and dynamically generated columns
-metadata_postgres = MetaData(schema='avl_modeler_datasets_1')
-projects_postgres = Table('tl_2019_36_bg', metadata_postgres, *columns)
+metadata_postgres = MetaData(schema='avl_modeler_datasets')
+projects_postgres = Table('tl_2019_36_puma10', metadata_postgres, *columns)
 
 # Create the table in PostgreSQL
 metadata_postgres.create_all(postgres_engine)

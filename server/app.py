@@ -51,6 +51,15 @@ def get_db_connection_pg():
                         )
     return conn
 
+def get_db_connection_pg_neptune():
+    conn = psycopg2.connect(
+                        database="postgres", 
+                        user="postgres", 
+                        password="1234", 
+                        host="neptune.availabs.org", port="5437"
+                        )
+    return conn
+
 
 @app.route('/')
 @cross_origin(supports_credentials=True)
@@ -120,6 +129,7 @@ def projectsByUser(userId):
 def osmBySelectedPuma(selectedPUMA):
 
     conn = get_db_connection_pg()
+    # conn = get_db_connection_pg_neptune()
     curr = conn.cursor()
 
     print ("selectedPUMA", selectedPUMA, selectedPUMA[-1], type(selectedPUMA))
@@ -146,6 +156,25 @@ def osmBySelectedPuma(selectedPUMA):
     selectedBB_postgres = curr.fetchall()
 
     print("selectedBB_postgres------", selectedBB_postgres)
+
+
+    # curr.execute(f'''SELECT jsonb_build_object(
+    #                         'type',       'Feature',
+    #                         'id',         osm_id,
+    #                         'geometry',   ST_AsGeoJSON(ST_Transform(way, 4326))::jsonb,
+    #                         'properties', to_jsonb(inputs) - 'osm_id' - 'geom'
+    #                          ) AS feature
+    #                     FROM (
+    #                         SELECT
+    #                         *
+    #                         FROM avl_modeler_osm.planet_osm_roads
+    #                         Inner JOIN avl_modeler_datasets.tl_2019_36_puma10 AS a
+    #                         ON 
+    #                             ST_contains(a.geometry, way)
+    #                         WHERE  a.geoid10 in ('{selectedPUMA}') and highway in ('primary','secondary', 'tertiary', 'truck', 'motorway')
+    #                         ) inputs;
+    #                     ''')
+
 
 
 
@@ -191,6 +220,130 @@ def osmBySelectedPuma(selectedPUMA):
 
 
     return jsonify(feature_collection)
+
+
+
+
+@app.route('/projects/pumageometry/getosmid/<selectedPUMA>')
+def osmidsBySelectedPuma(selectedPUMA):
+    conn = get_db_connection_pg_neptune()
+    # conn = get_db_connection_pg()
+    curr = conn.cursor()
+
+    print ("selectedPUMA", selectedPUMA, selectedPUMA[-1], type(selectedPUMA))
+    
+
+    # conn = psycopg2.connect(database="kari", 
+    #                         user="dama_dev_user", 
+    #                         password="57e5b991-630f-4ca8-8078-f552744a2cf1", 
+    #                         host="mercury.availabs.org", port="5532") 
+    
+    # curr= conn.cursor()
+   
+    # print("connection_test", conn )
+
+    # selectedPUMA_str = ','.join(map(str, selectedPUMA))
+
+    # postgres db start here----
+    # bbbox
+    
+    curr.execute(f'''
+        SELECT ST_Extent(geometry) AS bounding_box
+        FROM avl_modeler_datasets.tl_2019_36_puma10
+        WHERE geoid10 IN ('{selectedPUMA}')''')
+    selectedBB_postgres = curr.fetchall()
+
+    print("selectedBB_postgres------", selectedBB_postgres)
+
+
+    # curr.execute(f'''SELECT jsonb_build_object(
+    #                         'type',       'Feature',
+    #                         'id',         osm_id,
+    #                         'geometry',   ST_AsGeoJSON(ST_Transform(way, 4326))::jsonb,
+    #                         'properties', to_jsonb(inputs) - 'osm_id' - 'geom'
+    #                          ) AS feature
+    #                     FROM (
+    #                         SELECT
+    #                         *
+    #                         FROM avl_modeler_osm.planet_osm_roads
+    #                         Inner JOIN avl_modeler_datasets.tl_2019_36_puma10 AS a
+    #                         ON 
+    #                             ST_contains(a.geometry, way)
+    #                         WHERE  a.geoid10 in ('{selectedPUMA}') and highway in ('primary','secondary', 'tertiary', 'truck', 'motorway')
+    #                         ) inputs;
+    #                     ''')
+
+
+
+   # For mercury server
+
+    # curr.execute(f''' SELECT
+    #                         osm_id
+    #                         FROM avl_modeler_osm.planet_osm_roads
+    #                         Inner JOIN avl_modeler_datasets.tl_2019_36_puma10 AS a
+    #                         ON 
+                             
+    #                             ST_contains(a.geometry, way)
+    #                         WHERE  a.geoid10 in ('{selectedPUMA}') 
+                            
+    #                     ''')
+
+
+    # for neptune and modified query to handle SRID mismatch 
+     
+    # curr.execute(f'''
+    #                 SELECT
+    #                     osm_id
+    #                 FROM avl_modeler_osm.nys_osm_roads
+    #                 INNER JOIN avl_modeler_datasets.tl_2019_36_puma10 AS a
+    #                 ON ST_Contains(
+    #                     ST_Transform(ST_SetSRID(a.geometry, 4326), 4326),
+    #                     nys_osm_roads.way
+    #                 )
+    #                 WHERE a.geoid10 IN ('{selectedPUMA}')
+    # ''')
+
+
+    curr.execute(f'''
+                    SELECT
+                        osm_id
+                    FROM avl_modeler_osm.nys_osm_roads_linestrings
+                    INNER JOIN avl_modeler_datasets.tl_2019_36_puma10 AS a
+                    ON ST_Contains(
+                        ST_Transform(ST_SetSRID(a.geometry, 4326), 4326),
+                        nys_osm_roads_linestrings.geom
+                    )
+                    WHERE a.geoid10 IN ('{selectedPUMA}')
+    ''')
+
+
+    
+    containedOsmids = curr.fetchall()
+
+    contained_osm_ids = [d for (d,) in containedOsmids]
+    
+    print ("containedWaysNew----", contained_osm_ids[:1], type(contained_osm_ids), len(contained_osm_ids))
+   
+    print ("contained_osm_ids done")
+
+
+    print("postgres done")
+    
+    conn.commit()
+
+    curr.close()
+    conn.close()
+
+    # # the FeatureCollection
+    # feature_collection = {
+    #     "type": "FeatureCollection",
+    #     "features": contained_ways
+    # }
+
+
+    return jsonify(contained_osm_ids)
+
+
 
 
 
@@ -821,3 +974,129 @@ def destinationBySenario(senarioId, projectId):
     conn.close()
 
     return jsonify(destination)
+
+
+
+
+@app.route('/network/<int:sourceid>/<int:targetid>')
+def shortestNetwork(sourceid, targetid):
+    conn = get_db_connection_pg_neptune()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    # query = '''
+    # SELECT * FROM pgr_dijkstra(
+    #     'SELECT id, source, target, cost, reverse_cost FROM avl_modeler_osm.nys_osm_roads_noded',
+    #     %s,
+    #     %s,
+    #     false
+    # )
+    # '''
+
+    # query = '''
+    #     WITH path AS (
+    #         SELECT * FROM pgr_dijkstra(
+    #             'SELECT id, source, target, cost, reverse_cost FROM avl_modeler_osm.nys_osm_roads_noded',
+    #             %s,
+    #             %s,
+    #             false
+    #         )
+    #     )
+    #     SELECT p.seq, p.path_seq, p.start_vid, p.end_vid, p.node, p.edge, p.cost, p.agg_cost, n.osm_id
+    #     FROM path AS p
+    #     JOIN avl_modeler_osm.nys_osm_roads_noded AS n ON p.edge = n.id;
+    #     '''
+
+    query = '''
+        WITH path AS (
+            SELECT * FROM pgr_dijkstra(
+                'SELECT id, source, target, cost, reverse_cost FROM avl_modeler_osm.nys_osm_roads_linestrings_noded',
+                %s,
+                %s,
+                false
+            )
+        )
+        SELECT p.seq, p.path_seq, p.start_vid, p.end_vid, p.node, p.edge, p.cost, p.agg_cost, n.osm_id
+        FROM path AS p
+        JOIN avl_modeler_osm.nys_osm_roads_linestrings_noded AS n ON p.edge = n.id;
+        '''
+
+
+
+    
+    cursor.execute(query, (sourceid, targetid))
+    status = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return jsonify(status)
+
+
+
+@app.route('/network/nearest/<coordinates>')
+def nearestVertex(coordinates):
+    conn = get_db_connection_pg_neptune()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    print ("coordinates", coordinates)
+    
+    # regular expression to extract lng and lat from the coordinates string
+    match = re.match(r'\{lng: (-?\d+\.\d+), lat: (\d+\.\d+)\}', coordinates)
+    lng = float(match.group(1))
+    lat = float(match.group(2))
+
+    print("Longitude:", lng, "Latitude:", lat)
+
+    query = '''
+    SELECT v.id, v.the_geom
+    FROM avl_modeler_osm.nys_osm_roads_noded_vertices_pgr AS v,
+        avl_modeler_osm.nys_osm_roads_noded AS e
+    WHERE v.id = (
+        SELECT id 
+        FROM avl_modeler_osm.nys_osm_roads_noded_vertices_pgr
+        ORDER BY the_geom <-> ST_SetSRID(ST_MakePoint(%s, %s), 4326)
+        LIMIT 1
+    )
+    AND (e.source = v.id OR e.target = v.id)
+    GROUP BY v.id, v.the_geom;
+    '''
+    
+    cursor.execute(query, (lng, lat))
+    status = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return jsonify(status)
+
+
+@app.route('/network/nearest1/<lng>/<lat>')
+def nearestVertex1(lng,lat):
+    conn = get_db_connection_pg_neptune()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+
+
+    print("Longitude:", lng, "Latitude:", lat)
+
+    query = '''
+    SELECT v.id, v.the_geom
+    FROM avl_modeler_osm.nys_osm_roads_linestrings_noded_vertices_pgr AS v,
+        avl_modeler_osm.nys_osm_roads_linestrings_noded AS e
+    WHERE v.id = (
+        SELECT id 
+        FROM avl_modeler_osm.nys_osm_roads_linestrings_noded_vertices_pgr
+        ORDER BY the_geom <-> ST_SetSRID(ST_MakePoint(%s, %s), 4326)
+        LIMIT 1
+    )
+    AND (e.source = v.id OR e.target = v.id)
+    GROUP BY v.id, v.the_geom;
+    '''
+    
+    cursor.execute(query, (lng, lat))
+    status = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return jsonify(status)

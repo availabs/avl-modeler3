@@ -16,7 +16,10 @@ class PopSynthLayer extends LayerContainer {
     selectedPumas: [],
     selectedBlockGroups: [],
     selectedPumasBgs: {},
-    selectedOSM: []
+    selectedOSM: [],
+    selectedOsmIds: [],
+    visibility:"none"
+
   };
 
   sources = [
@@ -42,6 +45,17 @@ class PopSynthLayer extends LayerContainer {
         data: this.state.selectedOSM,
       },
     },
+
+    {
+      "id": "kari_nys_osm_roads_lines_1721749245753",
+      "source": {
+         "type": "vector",
+         "tiles": [
+            "https://graph.availabs.org/dama-admin/kari/tiles/247/{z}/{x}/{y}/t.pbf?cols=osm_id"
+         ],
+         "format": "pbf"
+      }
+   }
   ];
 
 
@@ -111,6 +125,25 @@ class PopSynthLayer extends LayerContainer {
         "fill-opacity": 0.5, 
       },
     },
+
+    {
+      "id": "osm_roads",
+      "type": "line",
+      "paint": {
+         "line-color": "black",
+         "line-width": 1
+      },
+    
+      'layout': {
+                // Make the layer visible by default.
+                'visibility': 'none'
+      },
+     
+      "source": "kari_nys_osm_roads_lines_1721749245753",
+      "source-layer": "view_247",
+      // "filter": ["in", "osm_id", ""],
+   }
+
   ];
 
   infoBoxes = [
@@ -163,8 +196,6 @@ class PopSynthLayer extends LayerContainer {
 
       // this.mapboxMap.setFilter("testGeoJSONLayer", ["in", "GEOID10", ...this.state.selectedPumas]);
 
-
-
       //1. this.mapboxMap.queryRenderedFeatures /////////////////////////////////////////////
       var selectedFeaturesPuma = this.mapboxMap
         .queryRenderedFeatures({
@@ -192,42 +223,6 @@ class PopSynthLayer extends LayerContainer {
 
       console.log("featuresGeometryBgs", featuresGeometryBgs);
 
-      // find BGs contained using turf and format {PUMA:[BGs], ... }
-
-      // let PUMAandBgs = Object.values(selectedFeaturesPuma).reduce(
-      //   (acc, feature) => {
-      //     console.log("feature2", feature);
-
-      //     let selectedBgIds = Object.keys(featuresGeometryBgs).reduce(
-      //       (acc, geoid) => {
-      //         // console.log('check bg', geoid, featuresGeometryBgs[geoid])
-      //         // //let polygon = turf.polygon(featuresGeometryBgs[geoid])
-      //         let results = turf.booleanPointInPolygon(
-      //           turf.centroid(featuresGeometryBgs[geoid]),
-      //           feature
-      //         );
-
-      //         if (results) {
-      //           feature.properties.GEOID10 = acc.push(geoid);
-
-      //           // let selectedBgsIds =[]
-      //           // selectedBgsIds.push(geoid)
-      //           // acc[feature.properties.GEOID10] = selectedBgsIds.push(geoid)
-      //         }
-      //         return acc;
-      //       },
-      //       []
-      //     );
-
-      //     console.log("selectedBgIds---------", selectedBgIds);
-
-      //     acc[`${feature.properties.STATEFP10}${feature.properties.PUMACE10}`] =
-      //       selectedBgIds;
-      //     return acc;
-      //   },
-      //   {}
-      // );
-
       //rewrite PUMAandBgs/turf with st_contains in sqlite
 
       let selectedPumas = this.state.selectedPumas;
@@ -246,9 +241,6 @@ class PopSynthLayer extends LayerContainer {
 
             PUMAandBgs[pumaId] = d;
 
-            // this.updateState({
-            //   selectedPumasBgs3: PUMAandBgs3,
-            // });
             console.log("PUMAandBgs_d", d, PUMAandBgs);
 
             return PUMAandBgs;
@@ -285,6 +277,8 @@ class PopSynthLayer extends LayerContainer {
 
       var uniqbg = new Set(this.state.selectedBlockGroups);
 
+      console.log("uniqbg---------",uniqbg, this.state.selectedBlockGroups)
+
       this.mapboxMap.setFilter("BG-highlight", [
         "in",
         "GEOID",
@@ -303,93 +297,55 @@ class PopSynthLayer extends LayerContainer {
 
     // },
 
-    // test adding osmlayer
-        // let selectedFeaturesPumaString = JSON.stringify(this.state.selectedPumas).replace(/"/g, '');
-        let selectedFeaturesPumaString = this.state.selectedPumas.slice(-1).join(',');
-        console.log("selectedFeaturesPumaString-----", selectedFeaturesPumaString, this.state.selectedPumas, this.state.selectedPumas.slice(-1))
 
-        console.log('fetch geojson');
+/////add osm_roads from tile server
 
-        console.log('fetch layerId-------------',  layerId, layer, layer.projectId)
+      let selectedFeaturesPumaString = this.state.selectedPumas.slice(-1).join(',');
+      console.log("selectedFeaturesPumaString-----", selectedFeaturesPumaString, this.state.selectedPumas, this.state.selectedPumas.slice(-1))
 
-      // const openStreetLayer = async () => {
-      // const response = await  fetch(`http://localhost:5000/projects/pumageometry/getosm/${selectedFeaturesPumaString}`)
 
-      if (!selected.includes(GEOID10)) {
-        this.updateState({
-          selectedPumas: [...selected, GEOID10],
-        });
-        console.log("add", selected);
-      }
-      
-      fetch(`http://localhost:5000/projects/pumageometry/getosm/${selectedFeaturesPumaString}`)
+        fetch(`http://localhost:5000/projects/pumageometry/getosmid/${selectedFeaturesPumaString}`)
 
         .then((r) => r.json())
         .then((data) => {
 
-          console.log("data------------", data.features)
+          console.log("osm_ids------------", data)
+
+          // stringData = data.map(String)
+
+          // this.updateState({
+          //   visibility: 'visible',
+          // });
+          this.mapboxMap.setLayoutProperty(
+            "osm_roads","visibility", "visible");
+
       
-          let selected = this.state.selectedOSM;
+          let osmIds = this.state.selectedOsmIds;
 
           this.updateState({
-            selectedOSM: [...selected, ...data.features],
+            selectedOsmIds: [...osmIds, ...data],
           });
-          console.log("add", selected);
 
-          console.log('geometryData-----', this.state.selectedOSM);
-       
 
-       let  feature_collection = {
-            "type": "FeatureCollection",
-            "features": this.state.selectedOSM
-        }
+         
+          console.log("osmIds_add", this.state.selectedOsmIds);
+
+        this.mapboxMap.setFilter('osm_roads', ['in', ['get', 'osm_id'], ['literal', this.state.selectedOsmIds]]);
+  
+
+          });
+
+      var uniqOsmIdsString = this.state.selectedOsmIds.map(String)
+
+      var newUniqOsmIdsString = new Set(uniqOsmIdsString);
     
 
-       if (!this.mapboxMap.getSource("osm-src")) {
-          
-          this.mapboxMap.addSource('osm-src', {
-            type: 'geojson',
-            data: feature_collection,
-          });
-
-          this.mapboxMap.addLayer({
-            'id': 'osm-calls',
-            'type': 'line',
-            'source': 'osm-src',
-            'layout': {},
-            'paint': {
-                'line-color': '#000',
-                'line-width': 3
-            }
-          });
-
-        } else {
-
-          this.mapboxMap.getSource('osm-src').setData(feature_collection)
-
-          this.mapboxMap.addLayer({
-            'id': 'osm-calls',
-            'type': 'line',
-            'source': 'osm-src',
-            'layout': {},
-            'paint': {
-                'line-color': '#000',
-                'line-width': 3
-            }
+      console.log("uniqOsmIds---------",uniqOsmIdsString, this.state.selectedOsmIds, newUniqOsmIdsString)
+      console.log("visible---", this.state.visibility)
     
-          });
-
-        }
-
-
-      });
-
-
     },
 
-
   }
-
 
   render(map) {
 

@@ -4,12 +4,13 @@ import ProjectView from "./pages/Project/View";
 import DataManager from "./pages/DataManager"
 import {useFalcor} from "./modules/avl-falcor";
 // import { useFalcor } from "./modules/avl-components/src";
-import {
-   useAuth
-  } from "./modules/ams/src"
+import {useAuth} from "./modules/ams/src"
 
-import Auth from './pages/auth/index.jsx'
+// import Auth from './sites/auth/index.jsx'
+import Auth from "./pages/Auth"
 import NoMatch from "./pages/404";
+
+
 
 const DAMA_ARGS = {
   
@@ -29,6 +30,7 @@ const DAMA_ARGS = {
     },
   }
 }
+
 
 const Routes = [
   Home, 

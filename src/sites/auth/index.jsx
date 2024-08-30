@@ -4,7 +4,7 @@ const AuthConfig = {
   children: [
     { type: "ams-login" ,
       path: "login",
-      props: { title: "MitigateNY" }
+      props: { title: "Avl-modeler3" }
     },
     { ype: "ams-reset-password",
       path: "reset-password",

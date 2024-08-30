@@ -6,14 +6,13 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 import Layout from "./layout/avail-layout";
 import LayoutWrapper from "./layout/LayoutWrapper";
-import Test from "./pages/test";
-import TempComp from "./pages/temp";
-import Home from "./pages/Home";
+
 import { path } from "d3";
 // import { getSubdomain }  from '~/utils'
-// import Auth from './pages/auth/index.jsx'
 
-// import Routes from './routes'
+// import Auth from './sites/auth/index.jsx'
+
+
 import DefaultRoutes from './routes';
 
 // const Sites = {
@@ -23,20 +22,6 @@ import DefaultRoutes from './routes';
 // }
 
 
-// const DefaultRoutes = [
-//   {
-//     path: "/",
-//     component: () => <Home/>,
-//   },
-//   {
-//     path: "/test1",
-//     component: () => <Test/>,
-//   },
-//   {
-//     path: "/test2",
-//     component: () => <TempComp tempVar="new Temp"/>,
-//   }
-// ];
 
 function App(props) {
  
