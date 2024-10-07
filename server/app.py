@@ -22,6 +22,9 @@ import overpass
 import psycopg2
 import psycopg2.extras
 
+import openmatrix as omx
+import numpy as np
+
 
 # import popsynth
 
@@ -256,24 +259,6 @@ def osmidsBySelectedPuma(selectedPUMA):
     print("selectedBB_postgres------", selectedBB_postgres)
 
 
-    # curr.execute(f'''SELECT jsonb_build_object(
-    #                         'type',       'Feature',
-    #                         'id',         osm_id,
-    #                         'geometry',   ST_AsGeoJSON(ST_Transform(way, 4326))::jsonb,
-    #                         'properties', to_jsonb(inputs) - 'osm_id' - 'geom'
-    #                          ) AS feature
-    #                     FROM (
-    #                         SELECT
-    #                         *
-    #                         FROM avl_modeler_osm.planet_osm_roads
-    #                         Inner JOIN avl_modeler_datasets.tl_2019_36_puma10 AS a
-    #                         ON 
-    #                             ST_contains(a.geometry, way)
-    #                         WHERE  a.geoid10 in ('{selectedPUMA}') and highway in ('primary','secondary', 'tertiary', 'truck', 'motorway')
-    #                         ) inputs;
-    #                     ''')
-
-
 
    # For mercury server
 
@@ -290,6 +275,8 @@ def osmidsBySelectedPuma(selectedPUMA):
 
 
     # for neptune and modified query to handle SRID mismatch 
+
+    # simple roads
      
     # curr.execute(f'''
     #                 SELECT
@@ -314,9 +301,27 @@ def osmidsBySelectedPuma(selectedPUMA):
                         nys_osm_roads_linestrings.geom
                     )
                     WHERE a.geoid10 IN ('{selectedPUMA}')
+                    AND nys_osm_roads_linestrings.fclass IN (
+                    'motorway', 'motorway_link',
+                    'trunk', 'trunk_link',
+                    'primary', 'primary_link',
+                    'secondary', 'secondary_link',
+                    'tertiary', 'tertiary_link',
+                    'unclassified',
+                    'residential'
+                )
+         
     ''')
 
-
+             #     AND nys_osm_roads_linestrings.fclass IN (
+                #     'motorway', 'motorway_link',
+                #     'trunk', 'trunk_link',
+                #     'primary', 'primary_link',
+                #     'secondary', 'secondary_link',
+                #     'tertiary', 'tertiary_link',
+                #     'unclassified',
+                #     'residential'
+                # )
     
     containedOsmids = curr.fetchall()
 
@@ -983,44 +988,14 @@ def shortestNetwork(sourceid, targetid):
     conn = get_db_connection_pg_neptune()
     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-    # query = '''
-    # SELECT * FROM pgr_dijkstra(
-    #     'SELECT id, source, target, cost, reverse_cost FROM avl_modeler_osm.nys_osm_roads_noded',
-    #     %s,
-    #     %s,
-    #     false
-    # )
-    # '''
-
-    # query = '''
-    #     WITH path AS (
-    #         SELECT * FROM pgr_dijkstra(
-    #             'SELECT id, source, target, cost, reverse_cost FROM avl_modeler_osm.nys_osm_roads_noded',
-    #             %s,
-    #             %s,
-    #             false
-    #         )
-    #     )
-    #     SELECT p.seq, p.path_seq, p.start_vid, p.end_vid, p.node, p.edge, p.cost, p.agg_cost, n.osm_id
-    #     FROM path AS p
-    #     JOIN avl_modeler_osm.nys_osm_roads_noded AS n ON p.edge = n.id;
-    #     '''
-
     query = '''
-        WITH path AS (
-            SELECT * FROM pgr_dijkstra(
-                'SELECT id, source, target, cost, reverse_cost FROM avl_modeler_osm.nys_osm_roads_linestrings_noded',
-                %s,
-                %s,
-                false
-            )
-        )
-        SELECT p.seq, p.path_seq, p.start_vid, p.end_vid, p.node, p.edge, p.cost, p.agg_cost, n.osm_id
-        FROM path AS p
-        JOIN avl_modeler_osm.nys_osm_roads_linestrings_noded AS n ON p.edge = n.id;
-        '''
-
-
+    SELECT * FROM pgr_dijkstra(
+        'SELECT id, source, target, cost, reverse_cost FROM avl_modeler_osm.nys_osm_roads_linestrings_noded',
+        %s,
+        %s,
+        false
+    )
+    '''
 
     
     cursor.execute(query, (sourceid, targetid))
@@ -1030,6 +1005,188 @@ def shortestNetwork(sourceid, targetid):
     conn.close()
 
     return jsonify(status)
+
+
+
+@app.route('/network/createskim', methods=['POST'])
+def createskim_traveltime():
+    conn = get_db_connection_pg_neptune()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    # Get bgIds and projectId from JSON request body{"text":"avl_modeler_osm","cur":{"from":15,"to":15}}
+    data = request.get_json()
+    bgIds = data.get('bgIds', [])
+    projectId = data.get('projectId')
+
+    if not bgIds or not projectId:
+        return jsonify({"error": "No bgIds or projectId provided"}), 400
+
+    bgIdsN = "'" + "','".join(bgIds) + "'"
+
+    traveltime_sql = f'''
+    CREATE TABLE avl_modeler_datasets.tl_2019_36_bg_network_{projectId} AS
+        WITH RECURSIVE
+        bg_nodes AS (
+            SELECT geoid, node_id
+            FROM avl_modeler_datasets.tl_2019_36_bg
+            WHERE geoid IN ({bgIdsN})
+        ),
+        node_pairs AS (
+            SELECT 
+                a.geoid AS geoid_1,
+                b.geoid AS geoid_2,
+                a.node_id AS nodeid_1,
+                b.node_id AS nodeid_2
+            FROM bg_nodes AS a
+            CROSS JOIN bg_nodes AS b
+        ),
+        dijkstra_result AS (
+            SELECT *
+            FROM pgr_dijkstraCostMatrix(
+                'SELECT id, source, target, cost, reverse_cost FROM avl_modeler_osm.nys_osm_roads_linestrings_noded',
+                (SELECT array_agg(DISTINCT node_id) FROM bg_nodes)
+            )
+        )
+        SELECT 
+            np.geoid_1,
+            np.geoid_2,
+            np.nodeid_1,
+            np.nodeid_2,
+            COALESCE(dr.agg_cost, 0) AS agg_cost
+        FROM node_pairs AS np
+        LEFT JOIN dijkstra_result AS dr ON np.nodeid_1 = dr.start_vid AND np.nodeid_2 = dr.end_vid
+        ORDER BY np.geoid_1, np.geoid_2;
+    '''
+
+    try:
+        cursor.execute(traveltime_sql)
+        conn.commit()
+    
+    #   Call matrix_omx_tt
+        matrix_omx_tt(projectId)
+  
+
+        return jsonify({"message": f"Table tl_2019_36_bg_network_{projectId} created successfully"}), 200
+    
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def matrix_omx_tt(projectId):
+    conn = get_db_connection_pg_neptune()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    try:
+        query = f'''
+        SELECT geoid_1, geoid_2, agg_cost as traveltime
+        FROM avl_modeler_datasets.tl_2019_36_bg_network_{projectId} 
+        '''
+
+        cur.execute(query)
+        traveltime_output = cur.fetchall()
+        
+        print("traveltime_output---", traveltime_output[:10])
+
+        geoid_1 = np.unique([d['geoid_1'] for d in traveltime_output])
+        geoid_2 = np.unique([d['geoid_2'] for d in traveltime_output])
+
+        traveltimeTable = np.ones((len(geoid_1), len(geoid_2)))
+        eaTravelTimeTable = np.ones((len(geoid_1), len(geoid_2)))
+        amTravelTimeTable = np.ones((len(geoid_1), len(geoid_2)))
+        mdTravelTimeTable = np.ones((len(geoid_1), len(geoid_2)))
+        pmTravelTimeTable = np.ones((len(geoid_1), len(geoid_2)))
+        evTravelTimeTable = np.ones((len(geoid_1), len(geoid_2)))
+
+        for d in traveltime_output:
+            i = np.where(geoid_1 == d['geoid_1'])[0][0]
+            j = np.where(geoid_2 == d['geoid_2'])[0][0]
+
+            traveltimeTable[i, j] = d['traveltime']
+            eaTravelTimeTable[i, j] = d['traveltime']
+            amTravelTimeTable[i, j] = d['traveltime']*1.8
+            mdTravelTimeTable[i, j] = d['traveltime']
+            pmTravelTimeTable[i, j] = d['traveltime']*1.7
+            evTravelTimeTable[i, j] = d['traveltime']*1.2
+
+        cwdpath = os.getcwd()
+        print("The current working directory is %s" % cwdpath)
+
+        parent_dir = os.getcwd() + '/popsynth_runs/'
+        directory = str(projectId)
+        folder = os.path.join(parent_dir, directory)
+
+
+    #   creating tt skim
+
+        full_path = folder + '/output/activitysim_input/ttskims.omx'
+        dir_path = os.path.dirname(full_path)
+        if not os.path.exists(dir_path):
+            print(f"Directory does not exist: {dir_path}")
+            os.makedirs(dir_path, exist_ok=True)
+            print(f"Created directory: {dir_path}")
+
+        if not os.access(dir_path, os.W_OK):
+            print(f"No write permission for directory: {dir_path}")
+            raise PermissionError(f"No write permission for directory: {dir_path}")
+        
+        ttskims = omx.open_file(full_path, 'w')
+
+        ttskims['TravelTime'] = traveltimeTable
+       
+
+
+        prototype_skims = omx.open_file('popsynth_runs/test_prototype_mtc/data/skims.omx')
+
+        table_names_list = prototype_skims.list_matrices()
+
+        for name in table_names_list:
+            if "EA" in name:
+                if any(x in name for x in ["SOV", "HOV"]):
+                    ttskims[name] = eaTravelTimeTable
+                else:
+                    ttskims[name] = eaTravelTimeTable*10
+            elif "AM" in name:
+                if any(x in name for x in ["SOV", "HOV"]):
+                    ttskims[name] = amTravelTimeTable
+                else:
+                    ttskims[name] = amTravelTimeTable*10
+            elif "MD" in name:
+                if any(x in name for x in ["SOV", "HOV"]):
+                    ttskims[name] = mdTravelTimeTable
+                else:
+                    ttskims[name] = mdTravelTimeTable*10
+            elif "PM" in name:
+                if any(x in name for x in ["SOV", "HOV"]):
+                    ttskims[name] = pmTravelTimeTable
+                else:
+                    ttskims[name] = pmTravelTimeTable*10
+            elif "EV" in name:
+                if any(x in name for x in ["SOV", "HOV"]):
+                    ttskims[name] = evTravelTimeTable
+                else:
+                    ttskims[name] = evTravelTimeTable*10
+            elif "DISTBIKE" in name:
+                ttskims[name] = traveltimeTable * 2.5
+            elif "DISTWALK" in name:
+                ttskims[name] = traveltimeTable * 10
+            else:
+                ttskims[name] = traveltimeTable
+
+        prototype_skims.close()
+        ttskims.close()
+
+        print("OMX file created successfully")
+
+    except Exception as e:
+        print(f"Error in matrix_omx_tt: {str(e)}")
+        raise
+    finally:
+        cur.close()
+        conn.close()
 
 
 
@@ -1092,7 +1249,22 @@ def nearestVertex1(lng,lat):
     AND (e.source = v.id OR e.target = v.id)
     GROUP BY v.id, v.the_geom;
     '''
-    
+
+    # query = '''
+    # WITH nearest_vertex AS (
+    #     SELECT id, the_geom
+    #     FROM avl_modeler_osm.nys_osm_roads_linestrings_noded_vertices_pgr
+    #     ORDER BY the_geom <-> ST_SetSRID(ST_MakePoint(%s, %s), 4326)
+    #     LIMIT 1
+    #     )
+    # SELECT DISTINCT v.id, v.the_geom
+    #     FROM nearest_vertex v
+    #     JOIN avl_modeler_osm.nys_osm_roads_linestrings_noded e
+    #     ON e.source = v.id OR e.target = v.id;
+    # '''
+
+
+  
     cursor.execute(query, (lng, lat))
     status = cursor.fetchall()
 

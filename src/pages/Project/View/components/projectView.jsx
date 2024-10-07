@@ -4,10 +4,10 @@ import VarSelector from "./varSelector";
 import Dropdown from "./dropdown";
 import get from "lodash.get";
 
-const ProjectView = ({ projectId, selectedBlockGroups, layer }) => {
+const ProjectView = ({ projectId, selectedBlockGroups, layer, bgIds }) => {
   // console.log("projectview render");
 
-  console.log("project_layers------", projectId, selectedBlockGroups, layer);
+  console.log("project_layers------", projectId, selectedBlockGroups, layer, bgIds);
 
   const colors = {
     primary: "#333",
@@ -117,6 +117,7 @@ const ProjectView = ({ projectId, selectedBlockGroups, layer }) => {
             varList={varList}
             projectId={projectId}
             selectedBlockGroups={selectedBlockGroups}
+            bgIds ={bgIds}
           />
         </div>
       </div>

@@ -67,6 +67,7 @@ def run_senario(args, project_id, senario_id):
         os.chdir(folder_path)
         
         # # Run the activitysim command
+        # maybe better modify -d data to the activiysim input from popsynth output folder
         command = "activitysim run -c configs -d data -o output"
         subprocess.run(command, shell=True, capture_output=True, text=True)
         # result = subprocess.run(command, shell=True, capture_output=True, text=True )
@@ -258,39 +259,73 @@ def create_landuse_table(project_id, selectedBGs, folder):
     # cur = con.cursor()
 
     
-    cur.execute(f'''
-            CREATE TABLE avl_modeler_projects.project_{project_id}_landuse AS
-            SELECT 
-                ROW_NUMBER() OVER (ORDER BY "BG") AS "TAZ",
-                "BG" AS "BG",
-                "TRACT" AS "DISTRICT",
-                "TRACT" AS "SD",
-                "TRACT" AS "COUNTY",
-                COALESCE(count(DISTINCT "household_id"), 0) AS "TOTHH",
-                COALESCE(count(1), 0) AS "TOTPOP",
-                100 AS "TOTACRE", -- will need to join on spatial data
-                70 AS "RESACRE", 
-                30 AS "CIACRE",
-                COALESCE(SUM(CASE WHEN "ESR" IS NULL THEN 0 ELSE 1 END), 0) AS "TOTEMP",
-                COALESCE(SUM(CASE WHEN ("AGEP" ~ '^\d+(\.\d+)?$' AND CAST("AGEP"::numeric AS INTEGER) < 19 AND CAST("AGEP"::numeric AS INTEGER) >= 5) THEN 1 ELSE 0 END), 0) AS "AGE0519",
-                COALESCE(SUM(CASE WHEN ("ESR" ~ '^\d+(\.\d+)?$' AND CAST("ESR"::numeric AS INTEGER) = 1) THEN 1 ELSE 0 END), 0) AS "RETEMPN",
-                COALESCE(SUM(CASE WHEN ("ESR" ~ '^\d+(\.\d+)?$' AND CAST("ESR"::numeric AS INTEGER) = 2) THEN 1 ELSE 0 END), 0) AS "FPSEMPN",
-                COALESCE(SUM(CASE WHEN ("ESR" ~ '^\d+(\.\d+)?$' AND CAST("ESR"::numeric AS INTEGER) = 3) THEN 1 ELSE 0 END), 0) AS "HEREMPN",
-                COALESCE(SUM(CASE WHEN ("ESR" ~ '^\d+(\.\d+)?$' AND CAST("ESR"::numeric AS INTEGER) = 6) THEN 1 ELSE 0 END), 0) AS "OTHEMPN",
-                COALESCE(SUM(CASE WHEN ("ESR" ~ '^\d+(\.\d+)?$' AND CAST("ESR"::numeric AS INTEGER) = 4) THEN 1 ELSE 0 END), 0) AS "AGREMPN",
-                COALESCE(SUM(CASE WHEN ("ESR" ~ '^\d+(\.\d+)?$' AND CAST("ESR"::numeric AS INTEGER) = 5) THEN 1 ELSE 0 END), 0) AS "MWTEMPN",
-                5 AS "PRKCST",
-                10 AS "OPRKCST",
-                0 AS "area_type",
-                COALESCE(SUM(CASE WHEN ("SCHG" ~ '^\d+(\.\d+)?$' AND CAST("SCHG"::numeric AS INTEGER) < 15 AND CAST("SCHG"::numeric AS INTEGER) >= 11) THEN 1 ELSE 0 END), 0) AS "HSENROLL",
-                COALESCE(SUM(CASE WHEN ("SCHG" ~ '^\d+(\.\d+)?$' AND CAST("SCHG"::numeric AS INTEGER) < 15 AND CAST("SCHG"::numeric AS INTEGER) >= 11 AND CAST("WKHP"::numeric AS INTEGER) >= 30) THEN 1 ELSE 0 END), 0) AS "COLLFTE",
-                COALESCE(SUM(CASE WHEN ("SCHG" ~ '^\d+(\.\d+)?$' AND CAST("SCHG"::numeric AS INTEGER) < 15 AND CAST("SCHG"::numeric AS INTEGER) >= 11 AND CAST("WKHP"::numeric AS INTEGER) < 30) THEN 1 ELSE 0 END), 0) AS "COLLPTE",
-                3 AS "TOPOLOGY",
-                COALESCE(CAST("JWMNP"::numeric AS INTEGER), 0) AS "TERMINAL"
-            FROM avl_modeler_projects.project_{project_id}_persons
-            GROUP BY "BG", "TRACT", "JWMNP";
+    # cur.execute(f'''
+    #         CREATE TABLE avl_modeler_projects.project_{project_id}_landuse AS
+    #         SELECT 
+    #             ROW_NUMBER() OVER (ORDER BY "BG") AS "TAZ",
+    #             "BG" AS "BG",
+    #             "TRACT" AS "DISTRICT",
+    #             "TRACT" AS "SD",
+    #             "TRACT" AS "COUNTY",
+    #             COALESCE(count(DISTINCT "household_id"), 0) AS "TOTHH",
+    #             COALESCE(count(1), 0) AS "TOTPOP",
+    #             100 AS "TOTACRE", -- will need to join on spatial data
+    #             70 AS "RESACRE", 
+    #             30 AS "CIACRE",
+    #             COALESCE(SUM(CASE WHEN "ESR" IS NULL THEN 0 ELSE 1 END), 0) AS "TOTEMP",
+    #             COALESCE(SUM(CASE WHEN ("AGEP" ~ '^\d+(\.\d+)?$' AND CAST("AGEP"::numeric AS INTEGER) < 19 AND CAST("AGEP"::numeric AS INTEGER) >= 5) THEN 1 ELSE 0 END), 0) AS "AGE0519",
+    #             COALESCE(SUM(CASE WHEN ("ESR" ~ '^\d+(\.\d+)?$' AND CAST("ESR"::numeric AS INTEGER) = 1) THEN 1 ELSE 0 END), 0) AS "RETEMPN",
+    #             COALESCE(SUM(CASE WHEN ("ESR" ~ '^\d+(\.\d+)?$' AND CAST("ESR"::numeric AS INTEGER) = 2) THEN 1 ELSE 0 END), 0) AS "FPSEMPN",
+    #             COALESCE(SUM(CASE WHEN ("ESR" ~ '^\d+(\.\d+)?$' AND CAST("ESR"::numeric AS INTEGER) = 3) THEN 1 ELSE 0 END), 0) AS "HEREMPN",
+    #             COALESCE(SUM(CASE WHEN ("ESR" ~ '^\d+(\.\d+)?$' AND CAST("ESR"::numeric AS INTEGER) = 6) THEN 1 ELSE 0 END), 0) AS "OTHEMPN",
+    #             COALESCE(SUM(CASE WHEN ("ESR" ~ '^\d+(\.\d+)?$' AND CAST("ESR"::numeric AS INTEGER) = 4) THEN 1 ELSE 0 END), 0) AS "AGREMPN",
+    #             COALESCE(SUM(CASE WHEN ("ESR" ~ '^\d+(\.\d+)?$' AND CAST("ESR"::numeric AS INTEGER) = 5) THEN 1 ELSE 0 END), 0) AS "MWTEMPN",
+    #             5 AS "PRKCST",
+    #             10 AS "OPRKCST",
+    #             0 AS "area_type",
+    #             COALESCE(SUM(CASE WHEN ("SCHG" ~ '^\d+(\.\d+)?$' AND CAST("SCHG"::numeric AS INTEGER) < 15 AND CAST("SCHG"::numeric AS INTEGER) >= 11) THEN 1 ELSE 0 END), 0) AS "HSENROLL",
+    #             COALESCE(SUM(CASE WHEN ("SCHG" ~ '^\d+(\.\d+)?$' AND CAST("SCHG"::numeric AS INTEGER) < 15 AND CAST("SCHG"::numeric AS INTEGER) >= 11 AND CAST("WKHP"::numeric AS INTEGER) >= 30) THEN 1 ELSE 0 END), 0) AS "COLLFTE",
+    #             COALESCE(SUM(CASE WHEN ("SCHG" ~ '^\d+(\.\d+)?$' AND CAST("SCHG"::numeric AS INTEGER) < 15 AND CAST("SCHG"::numeric AS INTEGER) >= 11 AND CAST("WKHP"::numeric AS INTEGER) < 30) THEN 1 ELSE 0 END), 0) AS "COLLPTE",
+    #             3 AS "TOPOLOGY",
+    #             COALESCE(CAST("JWMNP"::numeric AS INTEGER), 0) AS "TERMINAL"
+    #         FROM avl_modeler_projects.project_{project_id}_persons
+    #         GROUP BY "BG", "TRACT", "JWMNP";
 
-        ''')
+    #     ''')
+    # con.commit()
+
+    cur.execute(f'''
+    CREATE TABLE avl_modeler_projects.project_{project_id}_landuse AS
+    SELECT 
+        ROW_NUMBER() OVER (ORDER BY "BG") AS "TAZ",
+        "BG" AS "BG",
+        MAX("TRACT") AS "DISTRICT",
+        MAX("TRACT") AS "SD",
+        MAX("TRACT") AS "COUNTY",
+        COALESCE(count(DISTINCT "household_id"), 0) AS "TOTHH",
+        COALESCE(count(1), 0) AS "TOTPOP",
+        100 AS "TOTACRE",
+        70 AS "RESACRE", 
+        30 AS "CIACRE",
+        COALESCE(SUM(CASE WHEN "ESR" IS NULL THEN 0 ELSE 1 END), 0) AS "TOTEMP",
+        COALESCE(SUM(CASE WHEN ("AGEP" ~ '^\d+(\.\d+)?$' AND CAST("AGEP"::numeric AS INTEGER) < 19 AND CAST("AGEP"::numeric AS INTEGER) >= 5) THEN 1 ELSE 0 END), 0) AS "AGE0519",
+        COALESCE(SUM(CASE WHEN ("ESR" ~ '^\d+(\.\d+)?$' AND CAST("ESR"::numeric AS INTEGER) = 1) THEN 1 ELSE 0 END), 0) AS "RETEMPN",
+        COALESCE(SUM(CASE WHEN ("ESR" ~ '^\d+(\.\d+)?$' AND CAST("ESR"::numeric AS INTEGER) = 2) THEN 1 ELSE 0 END), 0) AS "FPSEMPN",
+        COALESCE(SUM(CASE WHEN ("ESR" ~ '^\d+(\.\d+)?$' AND CAST("ESR"::numeric AS INTEGER) = 3) THEN 1 ELSE 0 END), 0) AS "HEREMPN",
+        COALESCE(SUM(CASE WHEN ("ESR" ~ '^\d+(\.\d+)?$' AND CAST("ESR"::numeric AS INTEGER) = 6) THEN 1 ELSE 0 END), 0) AS "OTHEMPN",
+        COALESCE(SUM(CASE WHEN ("ESR" ~ '^\d+(\.\d+)?$' AND CAST("ESR"::numeric AS INTEGER) = 4) THEN 1 ELSE 0 END), 0) AS "AGREMPN",
+        COALESCE(SUM(CASE WHEN ("ESR" ~ '^\d+(\.\d+)?$' AND CAST("ESR"::numeric AS INTEGER) = 5) THEN 1 ELSE 0 END), 0) AS "MWTEMPN",
+        5 AS "PRKCST",
+        10 AS "OPRKCST",
+        0 AS "area_type",
+        COALESCE(SUM(CASE WHEN ("SCHG" ~ '^\d+(\.\d+)?$' AND CAST("SCHG"::numeric AS INTEGER) < 15 AND CAST("SCHG"::numeric AS INTEGER) >= 11) THEN 1 ELSE 0 END), 0) AS "HSENROLL",
+        COALESCE(SUM(CASE WHEN ("SCHG" ~ '^\d+(\.\d+)?$' AND CAST("SCHG"::numeric AS INTEGER) < 15 AND CAST("SCHG"::numeric AS INTEGER) >= 11 AND CAST("WKHP"::numeric AS INTEGER) >= 30) THEN 1 ELSE 0 END), 0) AS "COLLFTE",
+        COALESCE(SUM(CASE WHEN ("SCHG" ~ '^\d+(\.\d+)?$' AND CAST("SCHG"::numeric AS INTEGER) < 15 AND CAST("SCHG"::numeric AS INTEGER) >= 11 AND CAST("WKHP"::numeric AS INTEGER) < 30) THEN 1 ELSE 0 END), 0) AS "COLLPTE",
+        3 AS "TOPOLOGY",
+        COALESCE(MAX(CAST("JWMNP"::numeric AS INTEGER)), 0) AS "TERMINAL"
+    FROM avl_modeler_projects.project_{project_id}_persons
+    GROUP BY "BG";
+    ''')
     con.commit()
 
     cur.execute(f'SELECT * FROM avl_modeler_projects.project_{project_id}_landuse')
@@ -301,14 +336,25 @@ def create_landuse_table(project_id, selectedBGs, folder):
     persons_data = cur.fetchall()
     print("persons_data", persons_data[:2])
 
+    # cur.execute(f'ALTER TABLE avl_modeler_projects.project_{project_id}_households ADD COLUMN "TAZ" INTEGER')
+    # cur.execute(f'''
+    #     UPDATE avl_modeler_projects.project_{project_id}_households AS h
+    #     SET "TAZ" = l."TAZ"
+    #     FROM avl_modeler_projects.project_{project_id}_landuse AS l
+    #     WHERE h."BG" = l."BG";
+
+    # ''')
     cur.execute(f'ALTER TABLE avl_modeler_projects.project_{project_id}_households ADD COLUMN "TAZ" INTEGER')
     cur.execute(f'''
-        UPDATE avl_modeler_projects.project_{project_id}_households AS h
-        SET "TAZ" = l."TAZ"
-        FROM avl_modeler_projects.project_{project_id}_landuse AS l
-        WHERE h."BG" = l."BG";
-
-    ''')
+            UPDATE avl_modeler_projects.project_{project_id}_households
+            SET "TAZ" = (
+                SELECT l."TAZ"
+                FROM avl_modeler_projects.project_{project_id}_landuse AS l
+                WHERE l."BG" = avl_modeler_projects.project_{project_id}_households."BG"
+                LIMIT 1
+            )
+        ''')
+    
 
     cur.execute(f'SELECT * FROM avl_modeler_projects.project_{project_id}_households')
     households_data = cur.fetchall()
@@ -319,8 +365,12 @@ def create_landuse_table(project_id, selectedBGs, folder):
     con.close()
 
     # Create output directory if it doesn't exist
-    path = os.path.join(folder, 'output', 'activitysim_input')
-    os.makedirs(path, exist_ok=True)
+
+    # path = os.path.join(folder, 'output', 'activitysim_input')
+    # os.makedirs(path, exist_ok=True)
+
+
+    path = os.getcwd() + '/popsynth_runs/test_prototype_mtc_new/data'
 
     df_landuse = pd.DataFrame(landuse_data)
     df_landuse.to_csv(os.path.join(path, 'land_use.csv'), index=False)
@@ -414,7 +464,8 @@ def matrix_omx(project_id, selectedBGs, folder):
         pmTravelTimeTable[i, j] = pm_travel_time * 10000
         evTravelTimeTable[i, j] = ev_travel_time * 10000
 
-    skims = omx.open_file(folder + '/output/activitysim_input/skims.omx', 'w')
+    # skims = omx.open_file(folder + '/output/activitysim_input/skims.omx', 'w')
+    skims = omx.open_file('popsynth_runs/test_prototype_mtc_new/data/skims.omx', 'w')
 
     prototype_skims = omx.open_file('popsynth_runs/test_prototype_mtc/data/skims.omx')
 

@@ -68,11 +68,22 @@ class PopSynthLayer extends LayerContainer {
       source: {
           type: "vector",
           tiles: [
-             "https://graph.availabs.org/dama-admin/kari/tiles/267/{z}/{x}/{y}/t.pbf?cols=osm_id"
+             "https://graph.availabs.org/dama-admin/kari/tiles/267/{z}/{x}/{y}/t.pbf?cols=id"
           ],
           format: "pbf"
        }
     },
+
+    {
+      id: "kari_nys_osm_linestrings_1725387697381",
+      source: {
+         type: "vector",
+         tiles: [
+            "https://graph.availabs.org/dama-admin/kari/tiles/268/{z}/{x}/{y}/t.pbf?cols=osm_id"
+         ],
+         "format": "pbf"
+      }
+   },
  
 
 
@@ -183,21 +194,36 @@ class PopSynthLayer extends LayerContainer {
 
 
     {
-      id: "osm_linestrings",
+      id: "osm_linestrings_osmid",
       type: "line",
       paint: {
-         "line-color": "black",
-         "line-width": 1
+        "line-color": "black",
+        "line-width": 1
       },
       layout: {
         visibility: "none",
       },
-      source: "kari_nys_osm_linestrings_noded_1724978216656",
-      "source-layer": "view_267"
-   },
+      source: "kari_nys_osm_linestrings_1725387697381",
+      "source-layer": "view_268"
+    },
+
+    {
+      id: "osm_linestrings_osmid-selected",
+      type: "line",
+      paint: {
+        "line-color": "yellow",
+        "line-width": 6
+      },
+      layout: {
+        visibility: "none",
+      },
+      source: "kari_nys_osm_linestrings_1725387697381",
+      "source-layer": "view_268"
+    },
+
 
    {
-    id: "osm_linestrings-selected",
+    id: "osm_linestrings_edgeid",
     type: "line",
     paint: {
       "line-color": "yellow",
@@ -228,6 +254,7 @@ class PopSynthLayer extends LayerContainer {
                         projectId={layer.projectId}
                         layer={layer}
                         selectedBlockGroups={layer.state.selectedBlockGroups}
+                        bgIds ={this.state.bgsGeometryIds}
                       />
                     ),
                   },
@@ -337,24 +364,36 @@ class PopSynthLayer extends LayerContainer {
 
                     // Assuming your array is called 'dataArray'
                     const edgeArray = res.map(item => item.edge);
-                    const osmIdArray = res.map(item => item.osm_id);
+                    // const osmIdArray = res.map(item => item.osm_id);
 
                     // this.edgeArray = edgeArray;
 
-                    console.log("Res---- ", res, edgeArray, osmIdArray, osmIdArray.map(String));
+                    console.log("Res---- ", res, edgeArray, )
+                      // osmIdArray, osmIdArray.map(String));
                     // this.updateState({
                     //   odOsmIds: [...osmIdArray.map(String)],
                     // });
 
-                    var uniqueOsmIdArray = [...new Set(osmIdArray)];
+                    // var uniqueOsmIdArray = [...new Set(osmIdArray)];
                     var uniqueEdgeArray = [...new Set(edgeArray)];
 
-                    this.mapboxMap.setLayoutProperty("osm_roads-selected", "visibility", "visible");
+                    // this.mapboxMap.setLayoutProperty("osm_roads-selected", "visibility", "visible");
+                    // this.mapboxMap.setLayoutProperty("osm_linestrings_osmid-selected", "visibility", "visible");
+                    this.mapboxMap.setLayoutProperty("osm_linestrings_edgeid", "visibility", "visible");
 
 
-                    this.mapboxMap.setFilter("osm_roads-selected", 
-                      ["in", "osm_id", ...uniqueOsmIdArray]
+                    // this.mapboxMap.setFilter("osm_roads-selected", 
+                    //   ["in", "osm_id", ...uniqueOsmIdArray]
+                    // );
+
+                    // this.mapboxMap.setFilter("osm_linestrings_osmid-selected", 
+                    //   ["in", "osm_id", ...uniqueOsmIdArray]
+                    // );
+
+                    this.mapboxMap.setFilter("osm_linestrings_edgeid", 
+                      ["in", "id", ...uniqueEdgeArray]
                     );
+
 
                   });
 
@@ -449,8 +488,8 @@ class PopSynthLayer extends LayerContainer {
       .then((data) => {
         console.log("OSM IDs fetched:", data); // Add this line
         // this.mapboxMap.setLayoutProperty("osm_roads_neptune", "visibility", "visible");
-        // this.mapboxMap.setLayoutProperty("osm_roads", "visibility", "visible");
-        this.mapboxMap.setLayoutProperty("osm_linestrings", "visibility", "visible");
+        // this.mapboxMap.setLayoutProperty("osm_linestrings", "visibility", "visible");
+         this.mapboxMap.setLayoutProperty("osm_linestrings_osmid", "visibility", "visible");
 
         let osmIds = this.state.selectedOsmIds;
 
@@ -475,13 +514,19 @@ class PopSynthLayer extends LayerContainer {
         // ]);
 
   
-        this.mapboxMap.setFilter("osm_linestrings", [
+        // this.mapboxMap.setFilter("osm_linestrings", [
+        //   "in",
+        //   ["get", "osm_id"],
+        //   ["literal", this.state.selectedOsmIds],
+        // ]);
+
+
+  
+        this.mapboxMap.setFilter("osm_linestrings_osmid", [
           "in",
           ["get", "osm_id"],
           ["literal", this.state.selectedOsmIds],
         ]);
-
-
 
 
       });
