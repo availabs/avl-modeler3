@@ -4,9 +4,11 @@ import get from "lodash.get";
 
 const SenarioView = ({
   projectId,
-  selectedBlockGroups,
+  // selectedBlockGroups,
   layer,
-  onGetColors,
+  // onGetColors,
+  layerState,
+  setState,
 }) => {
   // console.log("SenarioView render");
 
@@ -18,11 +20,11 @@ const SenarioView = ({
   const [data, setData] = useState();
 
   const [process, setProcess] = useState(false);
-  const [status, setStatus] = useState(false);
+  // const [status, setStatus] = useState(false);
 
   const [senarioId, setSenarioId] = useState();
 
-  console.log("new senario input---------------", data);
+  console.log("new senario input---------------", data, layer, layer.state.bgsGeometryIds);
 
   //add senario title to the data
   const getTitle = (e) => {
@@ -76,16 +78,19 @@ const SenarioView = ({
   console.log("process-------------", process);
 
   // useEffect(() => {
+  //   if (senarioId) {
   //     fetch(`http://localhost:5000/senarios/${senarioId}/status`)
   //       .then((r) => r.json())
   //       .then((data) => {
   //         console.log("senario view status------------------------", data);
-  //         if ( data[0].status === "complete" )
-  //           setProcess(false);
-
+  //         // Update status or do something with the data
+  //         // setStatus(data[0].status);
+  //       })
+  //       .catch((error) => {
+  //         console.error("Error fetching scenario status:", error);
   //       });
-
-  // }, [process]);
+  //   }
+  // }, [senarioId]);
 
   return (
     // <div style={{ backgroundColor: "#fff", padding: 15 }}>
@@ -102,7 +107,9 @@ const SenarioView = ({
             color: colors.primary,
           }}
         >
-          Senario View: {senarioId}
+          Senario View: {senarioId} | {layerState.selectedBlockGroups?.length > 0 
+    ? layerState.selectedBlockGroups[layerState.selectedBlockGroups.length - 1] 
+    : ''}
         </div>
 
         <div className="flex flex-col">
@@ -142,10 +149,12 @@ const SenarioView = ({
           <div>
             <Dropdown
               projectId={projectId}
-              selectedBlockGroups={selectedBlockGroups}
+              // selectedBlockGroups={selectedBlockGroups}
+              selectedBlockGroups={layerState.selectedBlockGroups}
               layer={layer}
               selectedSenario={setSenarioId}
-              onGetColors={onGetColors}
+              // onGetColors={onGetColors}
+              onGetColors={(colors) => setState({ colors })}
             />
           </div>
         </div>

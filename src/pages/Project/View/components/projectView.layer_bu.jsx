@@ -5,7 +5,6 @@ import React from "react";
 import mapboxgl from "mapbox-gl";
 import ProjectView from "./projectView";
 import SenarioView from "./senarioView";
-import InfoBoxButton from './infoBoxButton';
 
 const HOST = "http://localhost:5000";
 
@@ -97,9 +96,8 @@ class PopSynthLayer extends LayerContainer {
       source: "bgs",
       type: "fill",
       paint: {
-        "fill-color": "white",
-        "fill-opacity": 0.8,
-        "fill-outline-color": "blue",
+        "fill-color": "blue",
+        "fill-opacity": 0.2,
       },
     },
     {
@@ -131,8 +129,8 @@ class PopSynthLayer extends LayerContainer {
       source: "pumas",
       type: "line",
       paint: {
-        "line-color": "black",
-        "line-width": 1,
+        "line-color": "white",
+        "line-width": 2,
       },
     },
   
@@ -241,125 +239,44 @@ class PopSynthLayer extends LayerContainer {
 
   ];
 
-  // infoBoxes = [
-  //   {
-  //     Component: ({ layer }) => {
-  //       return React.useMemo(
-  //         () => (
-  //           <div className="py-6 px-4 sm:px-6 mt-5" style={{ zIndex: 100 }}>
-  //             <TabPanel
-  //               tabs={[
-  //                 {
-  //                   name: "Project View",
-  //                   Component: () => (
-  //                     <ProjectView
-  //                       projectId={layer.projectId}
-  //                       layer={layer}
-  //                       selectedBlockGroups={layer.state.selectedBlockGroups}
-  //                       bgIds ={this.state.bgsGeometryIds}
-  //                     />
-  //                   ),
-  //                 },
-  //                 {
-  //                   name: "Scenario View",
-  //                   Component: () => (
-  //                     <SenarioView
-  //                       projectId={layer.projectId}
-  //                       layer={layer}
-  //                       // selectedBlockGroups={layer.state.selectedBlockGroups}
-  //                       layerState={layer.state}
-  //                       setState={this.updateState}
-
-  //                       // onGetColors={(colors) => this.updateState({ colors })}
-  //                     />
-  //                   ),
-  //                 },
-  //               ]}
-  //             />
-  //           </div>
-  //         ),
-  //         [layer.state.selectedBlockGroups]
-  //       );
-  //     },
-  //     show: true,
-  //   },
-  // ];
-
-
-  // infoBoxes = [
-  //   {
-  //     Component: ({ layer }) => {
-  //             return (
-             
-  //                 <div className="py-6 px-4 sm:px-6 mt-5" style={{ zIndex: 100 }}>
-  //                   <TabPanel
-  //                     tabs={[
-  //                       {
-  //                         name: "Project View",
-  //                         Component: () => (
-  //                           <ProjectView
-  //                             projectId={layer.projectId}
-  //                             layer={layer}
-  //                             selectedBlockGroups={layer.state.selectedBlockGroups}
-  //                             bgIds ={this.state.bgsGeometryIds}
-  //                           />
-  //                         ),
-  //                       },
-  //                       {
-  //                         name: "Scenario View",
-  //                         Component: () => (
-  //                           <SenarioView
-  //                             projectId={layer.projectId}
-  //                             layer={layer}
-  //                          // selectedBlockGroups={layer.state.selectedBlockGroups}
-  //                             layerState={layer.state}
-  //                             setState={this.updateState}
-  //                          // onGetColors={(colors) => this.updateState({ colors })}
-  //                           />
-  //                         ),
-  //                       },
-  //                     ]}
-  //                   />
-  //                 </div>
-               
-  //             );
-  //     },
-  //     show: true,
-  //   },
-  // ];
-
-
-  // infoBoxes = [
-  //   {
-  //     Component: ({ layer }) => {
-       
-  //       return (
-  //                     <SenarioView
-  //                       projectId={layer.projectId}
-  //                       layer={layer}
-  //                       // selectedBlockGroups={layer.state.selectedBlockGroups}
-  //                       layerState={layer.state}
-  //                       setState={this.updateState}
-
-  //                       // onGetColors={(colors) => this.updateState({ colors })}
-  //                     />
-  //                   );
-  //     },
-  //     show: true,
-  //   },
-  // ];
-
   infoBoxes = [
     {
-      Component: ({ layer }) => { 
-        return (
-          <InfoBoxButton 
-          layer={layer} 
-          layerState={this.state} 
-          setState={this.updateState} 
-          />
-          )
-        },
+      Component: ({ layer }) => {
+        return React.useMemo(
+          () => (
+            <div className="py-6 px-4 sm:px-6 mt-5" style={{ zIndex: 100 }}>
+              <TabPanel
+                tabs={[
+                  {
+                    name: "Project View",
+                    Component: () => (
+                      <ProjectView
+                        projectId={layer.projectId}
+                        layer={layer}
+                        selectedBlockGroups={layer.state.selectedBlockGroups}
+                        bgIds ={this.state.bgsGeometryIds}
+                      />
+                    ),
+                  },
+                  {
+                    name: "Scenario View",
+                    Component: () => (
+                      <SenarioView
+                        projectId={layer.projectId}
+                        layer={layer}
+                        selectedBlockGroups={layer.state.selectedBlockGroups}
+
+                        onGetColors={(colors) => this.updateState({ colors })}
+                      />
+                    ),
+                  },
+                ]}
+              />
+            </div>
+          ),
+          [layer.state.selectedBlockGroups]
+        );
+      },
       show: true,
     },
   ];
@@ -369,16 +286,6 @@ class PopSynthLayer extends LayerContainer {
   //   callback: (layer, features) => {
   //     const currvals = features.map(f => f.properties.ogc_fid);
   //     console.log('FEATURES?', layer, features, currvals, this.edgeArray, this.edgeArray.filter(ea => currvals.includes(ea) ))
-  //   }
-  // }
-
-  //   onHover = {
-  //   layers: ["BG"],
-  //   callback: (layer, features) => {
-  //     const cursor_value = features.map(f => f.properties.GEOID);
-
-  //     console.log('cursor_value?',  cursor_value  )
-  //     // return cursor_value;
   //   }
   // }
 
@@ -417,91 +324,91 @@ class PopSynthLayer extends LayerContainer {
 
       // });
 
-      // fetch(`http://localhost:5000/network/nearest1/${lng}/${lat}`)
-      //   .then((r) => r.json())
-      //   .then((sourceid) => {
-      //     console.log("sourceId---------------", sourceid[0].id);
-      //     let sourceId = sourceid[0].id;
-      //     if (sourceId) {
-      //       if (
-      //         this.state.selectedODIds.source === null &&
-      //         this.state.selectedODIds.target === null
-      //       ) {
-      //         this.updateState({
-      //           selectedODIds: {
-      //             source: sourceId,
-      //             target: this.state.selectedODIds.target,
-      //           },
-      //         });
-      //       } else if (
-      //         this.state.selectedODIds.source !== null &&
-      //         this.state.selectedODIds.target === null
-      //       ) {
-      //         this.updateState(
-      //           {
-      //             selectedODIds: {
-      //               source: this.state.selectedODIds.source,
-      //               target: sourceId,
-      //             },
-      //           }
-      //         );
-      //         if (
-      //           this.state.selectedODIds.source !== null &&
-      //           this.state.selectedODIds.target !== null
-      //         ) {
-      //           // call the API
-      //           fetch(
-      //             `http://localhost:5000/network/${this.state.selectedODIds.source}/${this.state.selectedODIds.target}`
-      //           )
-      //             .then((res) => res.json())
-      //             .then((res) => {
+      fetch(`http://localhost:5000/network/nearest1/${lng}/${lat}`)
+        .then((r) => r.json())
+        .then((sourceid) => {
+          console.log("sourceId---------------", sourceid[0].id);
+          let sourceId = sourceid[0].id;
+          if (sourceId) {
+            if (
+              this.state.selectedODIds.source === null &&
+              this.state.selectedODIds.target === null
+            ) {
+              this.updateState({
+                selectedODIds: {
+                  source: sourceId,
+                  target: this.state.selectedODIds.target,
+                },
+              });
+            } else if (
+              this.state.selectedODIds.source !== null &&
+              this.state.selectedODIds.target === null
+            ) {
+              this.updateState(
+                {
+                  selectedODIds: {
+                    source: this.state.selectedODIds.source,
+                    target: sourceId,
+                  },
+                }
+              );
+              if (
+                this.state.selectedODIds.source !== null &&
+                this.state.selectedODIds.target !== null
+              ) {
+                // call the API
+                fetch(
+                  `http://localhost:5000/network/${this.state.selectedODIds.source}/${this.state.selectedODIds.target}`
+                )
+                  .then((res) => res.json())
+                  .then((res) => {
 
-      //               // Assuming your array is called 'dataArray'
-      //               const edgeArray = res.map(item => item.edge);
-      //               // const osmIdArray = res.map(item => item.osm_id);
+                    // Assuming your array is called 'dataArray'
+                    const edgeArray = res.map(item => item.edge);
+                    // const osmIdArray = res.map(item => item.osm_id);
 
-      //               // this.edgeArray = edgeArray;
+                    // this.edgeArray = edgeArray;
 
-      //               console.log("Res---- ", res, edgeArray, )
-      //                 // osmIdArray, osmIdArray.map(String));
-      //               // this.updateState({
-      //               //   odOsmIds: [...osmIdArray.map(String)],
-      //               // });
+                    console.log("Res---- ", res, edgeArray, )
+                      // osmIdArray, osmIdArray.map(String));
+                    // this.updateState({
+                    //   odOsmIds: [...osmIdArray.map(String)],
+                    // });
 
-      //               // var uniqueOsmIdArray = [...new Set(osmIdArray)];
-      //               var uniqueEdgeArray = [...new Set(edgeArray)];
+                    // var uniqueOsmIdArray = [...new Set(osmIdArray)];
+                    var uniqueEdgeArray = [...new Set(edgeArray)];
 
-      //               // this.mapboxMap.setLayoutProperty("osm_roads-selected", "visibility", "visible");
-      //               // this.mapboxMap.setLayoutProperty("osm_linestrings_osmid-selected", "visibility", "visible");
-      //               this.mapboxMap.setLayoutProperty("osm_linestrings_edgeid", "visibility", "visible");
-
-
-      //               // this.mapboxMap.setFilter("osm_roads-selected", 
-      //               //   ["in", "osm_id", ...uniqueOsmIdArray]
-      //               // );
-
-      //               // this.mapboxMap.setFilter("osm_linestrings_osmid-selected", 
-      //               //   ["in", "osm_id", ...uniqueOsmIdArray]
-      //               // );
-
-      //               this.mapboxMap.setFilter("osm_linestrings_edgeid", 
-      //                 ["in", "id", ...uniqueEdgeArray]
-      //               );
+                    // this.mapboxMap.setLayoutProperty("osm_roads-selected", "visibility", "visible");
+                    // this.mapboxMap.setLayoutProperty("osm_linestrings_osmid-selected", "visibility", "visible");
+                    this.mapboxMap.setLayoutProperty("osm_linestrings_edgeid", "visibility", "visible");
 
 
-      //             });
+                    // this.mapboxMap.setFilter("osm_roads-selected", 
+                    //   ["in", "osm_id", ...uniqueOsmIdArray]
+                    // );
+
+                    // this.mapboxMap.setFilter("osm_linestrings_osmid-selected", 
+                    //   ["in", "osm_id", ...uniqueOsmIdArray]
+                    // );
+
+                    this.mapboxMap.setFilter("osm_linestrings_edgeid", 
+                      ["in", "id", ...uniqueEdgeArray]
+                    );
 
 
-      //           // make both source and target null again
-      //           this.updateState({
-      //             selectedODIds: { source: null, target: null },
-      //           });
-      //         }
-      //       }
+                  });
 
-      //       console.log("source_odOsmIds-----", this.state.odOsmIds);
-      //     }
-      //   });
+
+                // make both source and target null again
+                this.updateState({
+                  selectedODIds: { source: null, target: null },
+                });
+              }
+            }
+
+            console.log("source_odOsmIds-----", this.state.odOsmIds);
+          }
+        });
 
       // }
 
@@ -546,7 +453,7 @@ class PopSynthLayer extends LayerContainer {
           // }
         );
         console.log("State after update:", this.state);
-        // this.fetchOsmIds();
+        this.fetchOsmIds();
       });
     // });
   }

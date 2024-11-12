@@ -370,6 +370,19 @@ def selectedBGgeometry(selectedPUMA):
         ON ST_Contains(a.geometry, ST_Centroid(b.geometry))
         WHERE a.geoid10 IN ('{selectedPUMA}')
     """
+
+    # complete contained bgIDs to make model work with all PUMAs
+
+    # query = f"""
+    # SELECT
+    #     b.geoid as geoid_bg,
+    #     a.geoid10 as geoid_puma
+    #     FROM avl_modeler_datasets.tl_2019_36_bg AS b
+    #     INNER JOIN avl_modeler_datasets.tl_2019_36_puma10 AS a
+    #     ON ST_Contains(a.geometry, b.geometry)
+    #     WHERE a.geoid10 IN ('{selectedPUMA}')
+    # """
+    
     curr.execute(query)
     selectedBGsTable = curr.fetchall()
 
@@ -874,7 +887,8 @@ def senarioTableCreate():
     job = queue.enqueue('tasks.popsynth.run_senario', args, project_id, senario_id, job_timeout=3600)
     # job = queue.enqueue('run_senario', args, project_id, senario_id)
 
-    return "{\"message\": \"this message\"}"
+    # return "{\"message\": \"this message\"}"
+    return jsonify({"message": "Scenario created successfully", "id": senario_id})
 
 
 
@@ -981,6 +995,465 @@ def destinationBySenario(senarioId, projectId):
     return jsonify(destination)
 
 
+
+@app.route('/senarios/<senarioId>/trip/')
+
+def destinationOverviewBySenario(senarioId):
+
+
+    conn = get_db_connection_pg()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+     
+    countSql = f"""
+            SELECT destination, count(1)
+            FROM avl_modeler_senarios.senario_{senarioId}_trips
+            group by destination
+             """
+    cursor.execute(countSql)
+    trip = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return jsonify(trip)
+
+
+@app.route('/senarios/<senarioId>/<selectedVariable>/overviewByMode/')
+
+def variableOverviewBySenario(senarioId, selectedVariable):
+
+
+    conn = get_db_connection_pg()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+     
+    countSql = f"""
+            SELECT {selectedVariable}, count(1) as "Total"
+            FROM avl_modeler_senarios.senario_{senarioId}_trips
+            group by {selectedVariable}
+             """
+    cursor.execute(countSql)
+    trip = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return jsonify(trip)
+
+
+@app.route('/senarios/<senarioId>/<selectedVariable>/<selectedMetaKey>/overviewByMode/')
+
+def variableMetaKeyOverviewBySenario(senarioId, selectedVariable, selectedMetaKey):
+
+
+    conn = get_db_connection_pg()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+     
+    countSql = f"""
+            SELECT {selectedVariable}, count(1) as "Total"
+            FROM avl_modeler_senarios.senario_{senarioId}_trips
+            where {selectedVariable} = '{selectedMetaKey}'
+            group by {selectedVariable}
+             """
+    cursor.execute(countSql)
+    trip = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return jsonify(trip)
+
+
+# @app.route('/senarios/<senarioId>/<selectedTazVariable>/<selectedMetaVariable>/<metaKey>/<selectedBlockGroups>/trip')
+# def tripsBySenarioOriginPurpose(senarioId, selectedTazVariable, selectedMetaVariable, metaKey, selectedBlockGroups):
+#     conn = get_db_connection_pg()
+#     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+     
+#     #  find tazId using selectedBlockGroups
+#     tazId = "41"
+
+
+
+    
+#     reverseSelectedTazVariable = "destination" if selectedTazVariable == "origin" else "origin"
+
+
+#     countSql = f"""
+#         SELECT 
+#             {selectedTazVariable} as "TAZ",
+#             COUNT(1) as count
+#         FROM avl_modeler_senarios.senario_{senarioId}_trips
+#         WHERE 
+#             {reverseSelectedTazVariable} = %s AND 
+#             {selectedMetaVariable} = %s
+#         GROUP BY {selectedTazVariable}
+#         ORDER BY count DESC
+#     """
+    
+#     cursor.execute(countSql, (tazId, metaKey))
+#     trip_counts = cursor.fetchall()
+    
+#     cursor.close()
+#     conn.close()
+
+#     return jsonify(trip_counts)
+
+# @app.route('/senarios/<senarioId>/<projectId>/<selectedTazVariable>/<selectedMetaVariable>/<metaKey>/<selectedBlockGroups>/trip')
+# def tripsBySenarioOriginPurpose(senarioId, projectId, selectedTazVariable, selectedMetaVariable, metaKey, selectedBlockGroups):
+#     conn = get_db_connection_pg()
+#     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+#     # Find the TAZ ID using selectedBlockGroups 
+#     bg_to_taz_sql = f"""
+#         SELECT "TAZ"
+#         FROM avl_modeler_projects.project_{projectId}_households
+#         WHERE "BG" = %s::text
+#     """
+#     cursor.execute(bg_to_taz_sql, (selectedBlockGroups,))
+#     taz_result = cursor.fetchone()
+#     tazId = taz_result['TAZ'] if taz_result else None
+
+#     if tazId is None:
+#         cursor.close()
+#         conn.close()
+#         return jsonify({"error": "No TAZ ID found for the selected block group"}), 404
+
+#     # Query modified trip counts with selected Meta
+#     reverseSelectedTazVariable = "destination" if selectedTazVariable == "origin" else "origin"
+
+#     # Cast tazId and metaKey to the correct type
+#     countSql = f"""
+#         SELECT 
+#             {selectedTazVariable} as "TAZ",
+#             COUNT(1) as count
+#         FROM avl_modeler_senarios.senario_{senarioId}_trips
+#         WHERE 
+#             {reverseSelectedTazVariable} = %s::text AND 
+#             {selectedMetaVariable} = %s::text
+#         GROUP BY {selectedTazVariable}
+#         ORDER BY count DESC
+#     """
+
+#     cursor.execute(countSql, (str(tazId), str(metaKey)))
+#     trip_counts = cursor.fetchall()
+
+#     cursor.close()
+#     conn.close()
+    
+#     return jsonify(trip_counts)
+
+
+
+# new updated route
+
+# @app.route('/senarios/<senarioId>/<projectId>/<selectedTazVariable>/<selectedMetaVariable>/<metaKey>/<selectedBlockGroups>/trip')
+# def tripsBySenarioOriginPurpose(senarioId, projectId, selectedTazVariable, selectedMetaVariable, metaKey, selectedBlockGroups):
+#     conn = get_db_connection_pg()
+#     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+#     # Find the TAZ ID using selectedBlockGroups 
+#     bg_to_taz_sql = f"""
+#         SELECT "TAZ"
+#         FROM avl_modeler_projects.project_{projectId}_households
+#         WHERE "BG" = %s::text
+#     """
+#     cursor.execute(bg_to_taz_sql, (selectedBlockGroups,))
+#     taz_result = cursor.fetchone()
+#     tazId = taz_result['TAZ'] if taz_result else None
+
+#     if tazId is None:
+#         cursor.close()
+#         conn.close()
+#         return jsonify({"error": "No TAZ ID found for the selected block group"}), 404
+
+#     # Query modified trip counts with selected Meta
+#     reverseSelectedTazVariable = "destination" if selectedTazVariable == "origin" else "origin"
+
+#     countSql = f"""
+#         SELECT 
+#             {selectedTazVariable} as "TAZ",
+#             COUNT(1) as count
+#         FROM avl_modeler_senarios.senario_{senarioId}_trips
+#         WHERE 
+#             {reverseSelectedTazVariable} = %s::text AND 
+#             {selectedMetaVariable} = %s::text
+#         GROUP BY {selectedTazVariable}
+#         ORDER BY count DESC
+#     """
+
+#     cursor.execute(countSql, (str(tazId), str(metaKey)))
+#     trip_counts = cursor.fetchall()
+
+#     # Add 'bg' field to each entry in trip_counts as the last 7 characters of selectedBlockGroups
+#     for trip in trip_counts:
+#         trip['bg'] = selectedBlockGroups[-7:]  # Keep only the last 7 characters of selectedBlockGroups
+
+#     cursor.close()
+#     conn.close()
+    
+#     return jsonify(trip_counts)
+
+
+# @app.route('/senarios/<senarioId>/<projectId>/<selectedTazVariable>/<selectedMetaVariable>/<metaKey>/<selectedBlockGroups>/trip')
+# def tripsBySenarioOriginPurpose(senarioId, projectId, selectedTazVariable, selectedMetaVariable, metaKey, selectedBlockGroups):
+#     conn = get_db_connection_pg()
+#     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+#     # Find TAZ ID using selectedBlockGroups
+#     bg_to_taz_sql = f"""
+#         SELECT "TAZ"
+#         FROM avl_modeler_projects.project_{projectId}_households
+#         WHERE "BG" = %s::text OR RIGHT("BG", 7) = %s
+#     """
+#     cursor.execute(bg_to_taz_sql, (selectedBlockGroups, selectedBlockGroups[-7:]))
+#     taz_result = cursor.fetchone()
+
+#     if not taz_result:
+#         cursor.close()
+#         conn.close()
+#         return jsonify({"error": "No TAZ ID found for the selected block group"}), 404
+
+#     tazId = taz_result['TAZ']
+
+#     # Reverse selected TAZ variable
+#     reverseSelectedTazVariable = "destination" if selectedTazVariable == "origin" else "origin"
+
+#     # Query trip counts based on TAZ and Meta
+#     countSql = f"""
+#         SELECT 
+#             {selectedTazVariable} as "TAZ",
+#             COUNT(1) as "Total"
+#         FROM avl_modeler_senarios.senario_{senarioId}_trips
+#         WHERE 
+#             {reverseSelectedTazVariable} = %s::text AND 
+#             {selectedMetaVariable} = %s::text
+#         GROUP BY {selectedTazVariable}
+#         ORDER BY "Total" DESC
+#     """
+#     cursor.execute(countSql, (str(tazId), str(metaKey)))
+#     trip_counts = cursor.fetchall()
+
+#     # Retrieve the full 'BG' value for each TAZ in trip_counts
+#     for trip in trip_counts:
+#         taz_value = trip['TAZ']
+#         bg_sql = f"""
+#             SELECT "BG"
+#             FROM avl_modeler_projects.project_{projectId}_households
+#             WHERE "TAZ" = %s
+#             LIMIT 1
+#         """
+#         cursor.execute(bg_sql, (taz_value,))
+#         bg_result = cursor.fetchone()
+#         if bg_result and bg_result['BG']:
+#             trip['bg'] = bg_result['BG'][-7:]  # Keep only the last 7 characters of BG
+#         else:
+#             trip['bg'] = None
+
+#     cursor.close()
+#     conn.close()
+    
+#     return jsonify(trip_counts)
+
+
+
+
+
+
+@app.route('/senarios/<senarioId>/<projectId>/<selectedTazVariable>/<selectedMetaVariable>/<metaKey>/<selectedBlockGroups>/trip')
+def tripsBySenarioOriginPurpose(senarioId, projectId, selectedTazVariable, selectedMetaVariable, metaKey, selectedBlockGroups):
+    conn = get_db_connection_pg()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    # getting TAZ id based on selectedBlockGroups
+    bg_to_taz_sql = f"""
+        SELECT "TAZ"
+        FROM avl_modeler_projects.project_{projectId}_landuse
+        WHERE "BG" = %s
+    """
+    cursor.execute(bg_to_taz_sql, (selectedBlockGroups[-7:],))
+    taz_result = cursor.fetchone()
+
+    if not taz_result:
+        cursor.close()
+        conn.close()
+        return jsonify({"No matching TAZ ID found for the selected block group"})
+
+    tazId = taz_result['TAZ']
+
+    # Reverse selected TAZ variable for direction
+    reverseSelectedTazVariable = "destination" if selectedTazVariable == "origin" else "origin"
+
+   
+    countSql = f"""
+        SELECT 
+            t.{selectedTazVariable} as "TAZ",
+            COUNT(1) as "Total",
+            h."BG" as bg
+        FROM avl_modeler_senarios.senario_{senarioId}_trips t
+        JOIN avl_modeler_projects.project_{projectId}_landuse h 
+        ON t.{selectedTazVariable}::text = h."TAZ"::text
+        WHERE 
+            t.{reverseSelectedTazVariable} = %s::text AND 
+            t.{selectedMetaVariable} = %s::text
+        GROUP BY t.{selectedTazVariable}, h."BG"
+   
+    """
+    cursor.execute(countSql, (str(tazId), str(metaKey)))
+    trip_counts = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+    
+    return jsonify(trip_counts)
+
+
+
+
+@app.route('/senarios/<senarioId>/<projectId>/<selectedVariable>/trip')
+def tripBySenarioProject(senarioId, projectId, selectedVariable):
+    conn = get_db_connection_pg()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+   
+    countSql = f"""
+        SELECT {selectedVariable}  as "TAZ", count(1) as "Total"
+        FROM avl_modeler_senarios.senario_{senarioId}_trips
+        GROUP BY {selectedVariable}
+    """
+    
+    cursor.execute(countSql)
+    trip_counts = cursor.fetchall()
+
+    # Add BG from household table for each destination
+    for trip in trip_counts:
+        selectedVariable = trip['TAZ']
+        bgSql = f"""
+            SELECT "BG"
+            FROM avl_modeler_projects.project_{projectId}_households
+            WHERE "TAZ" = {selectedVariable}::integer
+            LIMIT 1
+        """
+        cursor.execute(bgSql)
+        bg_result = cursor.fetchone()
+        trip['bg'] = bg_result['BG'] if bg_result else None
+    
+    cursor.close()
+    conn.close()
+    return jsonify(trip_counts)
+
+
+@app.route('/senarios/<senarioId>/<selectedVariable>/trips')
+def tripCountsBySenario(senarioId, selectedVariable):
+    conn = get_db_connection_pg()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+   
+    countSql = f"""
+            WITH trip_data AS (
+                SELECT 
+                    destination as "TAZ", 
+                    {selectedVariable},
+                    COUNT(*) as count
+                FROM avl_modeler_senarios.senario_{senarioId}_trips
+                GROUP BY destination, {selectedVariable}
+            )
+        SELECT 
+            "TAZ",
+            json_object_agg({selectedVariable}, count) as variable,
+            SUM(count) as total_count
+        FROM trip_data
+        GROUP BY "TAZ"
+        ORDER BY "TAZ" ASC
+    """
+    
+    cursor.execute(countSql)
+    trip_counts = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+
+    # restructure the data
+    processed_counts = []
+    for item in trip_counts:
+        new_item = {
+            "TAZ": item["TAZ"],
+            "total_count": str(item["total_count"])  
+        }
+        new_item.update(item["variable"])
+        processed_counts.append(new_item)
+
+    return jsonify(processed_counts)
+
+@app.route('/senarios/<senarioId>/<projectId>/trip_overview')
+def tripOverviewBySenarioProject(senarioId, projectId):
+    conn = get_db_connection_pg()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+   
+    # First, get the total count for each destination
+    countSql = f"""
+        SELECT destination as "TAZ", COUNT(1) as count
+        FROM avl_modeler_senarios.senario_{senarioId}_trips
+        GROUP BY destination
+    """
+    
+    cursor.execute(countSql)
+    trip_counts = cursor.fetchall()
+
+    # Create a dictionary to store all information
+    result = {trip['TAZ']: {'count': trip['count'], 'origins': {}, 'modes': {}} for trip in trip_counts}
+
+    # Now, get the origin and mode breakdowns
+    detailSql = f"""
+        SELECT 
+            destination as "TAZ", 
+            origin,
+            COUNT(1) as origin_count,
+            trip_mode,
+            COUNT(1) as mode_count
+        FROM avl_modeler_senarios.senario_{senarioId}_trips
+        GROUP BY destination, origin, trip_mode
+    """
+    
+    cursor.execute(detailSql)
+    trip_details = cursor.fetchall()
+
+    # Process the details
+    for detail in trip_details:
+        taz = detail['TAZ']
+        origin = detail['origin']
+        mode = detail['trip_mode']
+
+        result[taz]['origins'][origin] = detail['origin_count']
+        result[taz]['modes'][mode] = detail['mode_count']
+
+    # Add BG information
+    for taz in result:
+        bgSql = f"""
+            SELECT "BG"
+            FROM avl_modeler_projects.project_{projectId}_households
+            WHERE "TAZ" = {taz}::integer
+            LIMIT 1
+        """
+        cursor.execute(bgSql)
+        bg_result = cursor.fetchone()
+        result[taz]['bg'] = bg_result['BG'] if bg_result else None
+
+    cursor.close()
+    conn.close()
+
+    # Convert the result dictionary to a list 
+    final_result = [
+        {
+            'TAZ': taz,
+            'bg': data['bg'],
+            'count': data['count'],
+            'origins': data['origins'],
+            'modes': data['modes']
+        }
+        for taz, data in result.items()
+    ]
+
+    return jsonify(final_result)
 
 
 @app.route('/network/<int:sourceid>/<int:targetid>')
@@ -1122,23 +1595,25 @@ def matrix_omx_tt(projectId):
 
     #   creating tt skim
 
-        full_path = folder + '/output/activitysim_input/ttskims.omx'
-        dir_path = os.path.dirname(full_path)
-        if not os.path.exists(dir_path):
-            print(f"Directory does not exist: {dir_path}")
-            os.makedirs(dir_path, exist_ok=True)
-            print(f"Created directory: {dir_path}")
+        # full_path = folder + '/output/activitysim_input/ttskims.omx'
+        # dir_path = os.path.dirname(full_path)
+        # if not os.path.exists(dir_path):
+        #     print(f"Directory does not exist: {dir_path}")
+        #     os.makedirs(dir_path, exist_ok=True)
+        #     print(f"Created directory: {dir_path}")
 
-        if not os.access(dir_path, os.W_OK):
-            print(f"No write permission for directory: {dir_path}")
-            raise PermissionError(f"No write permission for directory: {dir_path}")
-        
-        ttskims = omx.open_file(full_path, 'w')
+        # if not os.access(dir_path, os.W_OK):
+        #     print(f"No write permission for directory: {dir_path}")
+        #     raise PermissionError(f"No write permission for directory: {dir_path}")
+    
+        # ttskims = omx.open_file(full_path, 'w')
+
+        ttskims = omx.open_file('popsynth_runs/test_prototype_mtc_new/data/skims.omx', 'w')
 
         ttskims['TravelTime'] = traveltimeTable
        
 
-
+ 
         prototype_skims = omx.open_file('popsynth_runs/test_prototype_mtc/data/skims.omx')
 
         table_names_list = prototype_skims.list_matrices()
@@ -1272,3 +1747,7 @@ def nearestVertex1(lng,lat):
     conn.close()
 
     return jsonify(status)
+
+
+
+

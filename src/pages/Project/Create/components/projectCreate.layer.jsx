@@ -160,7 +160,7 @@ class PopSynthLayer extends LayerContainer {
     },
     {
       Component: CreateNewProject,
-      show: false,
+      show:false,
     },
   ];
 
