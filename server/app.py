@@ -24,6 +24,8 @@ import psycopg2.extras
 
 import openmatrix as omx
 import numpy as np
+import pandas as pd
+from sqlalchemy import create_engine
 
 
 # import popsynth
@@ -1549,6 +1551,418 @@ def createskim_traveltime():
         conn.close()
 
 
+# def matrix_omx_tt(projectId):
+#     conn = get_db_connection_pg_neptune()
+#     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+#     try:
+#         query = f'''
+#         SELECT geoid_1, geoid_2, agg_cost as traveltime
+#         FROM avl_modeler_datasets.tl_2019_36_bg_network_{projectId} 
+#         '''
+
+#         cur.execute(query)
+#         traveltime_output = cur.fetchall()
+        
+#         print("traveltime_output---", traveltime_output[:10])
+
+#         geoid_1 = np.unique([d['geoid_1'] for d in traveltime_output])
+#         geoid_2 = np.unique([d['geoid_2'] for d in traveltime_output])
+
+#         traveltimeTable = np.ones((len(geoid_1), len(geoid_2)))
+#         eaTravelTimeTable = np.ones((len(geoid_1), len(geoid_2)))
+#         amTravelTimeTable = np.ones((len(geoid_1), len(geoid_2)))
+#         mdTravelTimeTable = np.ones((len(geoid_1), len(geoid_2)))
+#         pmTravelTimeTable = np.ones((len(geoid_1), len(geoid_2)))
+#         evTravelTimeTable = np.ones((len(geoid_1), len(geoid_2)))
+
+#         for d in traveltime_output:
+#             i = np.where(geoid_1 == d['geoid_1'])[0][0]
+#             j = np.where(geoid_2 == d['geoid_2'])[0][0]
+
+#             traveltimeTable[i, j] = d['traveltime']
+#             eaTravelTimeTable[i, j] = d['traveltime']
+#             amTravelTimeTable[i, j] = d['traveltime']*1.8
+#             mdTravelTimeTable[i, j] = d['traveltime']
+#             pmTravelTimeTable[i, j] = d['traveltime']*1.7
+#             evTravelTimeTable[i, j] = d['traveltime']*1.2
+
+#         cwdpath = os.getcwd()
+#         print("The current working directory is %s" % cwdpath)
+
+#         parent_dir = os.getcwd() + '/popsynth_runs/'
+#         directory = str(projectId)
+#         folder = os.path.join(parent_dir, directory)
+
+
+#     #   creating tt skim
+
+#         # full_path = folder + '/output/activitysim_input/ttskims.omx'
+#         # dir_path = os.path.dirname(full_path)
+#         # if not os.path.exists(dir_path):
+#         #     print(f"Directory does not exist: {dir_path}")
+#         #     os.makedirs(dir_path, exist_ok=True)
+#         #     print(f"Created directory: {dir_path}")
+
+#         # if not os.access(dir_path, os.W_OK):
+#         #     print(f"No write permission for directory: {dir_path}")
+#         #     raise PermissionError(f"No write permission for directory: {dir_path}")
+    
+#         # ttskims = omx.open_file(full_path, 'w')
+
+#         ttskims = omx.open_file('popsynth_runs/test_prototype_mtc_new/data/skims.omx', 'w')
+
+#         ttskims['TravelTime'] = traveltimeTable
+       
+
+ 
+#         prototype_skims = omx.open_file('popsynth_runs/test_prototype_mtc/data/skims.omx')
+
+#         table_names_list = prototype_skims.list_matrices()
+
+#         for name in table_names_list:
+#             if "EA" in name:
+#                 if any(x in name for x in ["SOV", "HOV"]):
+#                     ttskims[name] = eaTravelTimeTable
+#                 elif "WLK" in name:
+#                     ttskims[name] = eaTravelTimeTable * 2
+#                 else:
+#                     ttskims[name] = eaTravelTimeTable*10
+#             elif "AM" in name:
+#                 if any(x in name for x in ["SOV", "HOV"]):
+#                     ttskims[name] = amTravelTimeTable
+#                 elif "WLK" in name:
+#                     ttskims[name] = amTravelTimeTable * 2
+#                 else:
+#                     ttskims[name] = amTravelTimeTable*10
+#             elif "MD" in name:
+#                 if any(x in name for x in ["SOV", "HOV"]):
+#                     ttskims[name] = mdTravelTimeTable
+
+#                 elif "WLK" in name:
+#                     ttskims[name] = mdTravelTimeTable * 2
+#                 else:
+#                     ttskims[name] = mdTravelTimeTable*10
+#             elif "PM" in name:
+#                 if any(x in name for x in ["SOV", "HOV"]):
+#                     ttskims[name] = pmTravelTimeTable
+
+#                 elif "WLK" in name:
+#                     ttskims[name] = pmTravelTimeTable * 2
+#                 else:
+#                     ttskims[name] = pmTravelTimeTable*10
+#             elif "EV" in name:
+#                 if any(x in name for x in ["SOV", "HOV"]):
+#                     ttskims[name] = evTravelTimeTable
+#                 elif "WLK" in name:
+#                     ttskims[name] = evTravelTimeTable * 2
+#                 else:
+#                     ttskims[name] = evTravelTimeTable*10
+#             elif "DISTBIKE" in name:
+#                 ttskims[name] = traveltimeTable * 3
+#             elif "DISTWALK" in name:
+#                 ttskims[name] = traveltimeTable * 10
+#             else:
+#                 ttskims[name] = traveltimeTable
+
+#         prototype_skims.close()
+#         ttskims.close()
+
+#         print("OMX file created successfully")
+
+#     except Exception as e:
+#         print(f"Error in matrix_omx_tt: {str(e)}")
+#         raise
+#     finally:
+#         cur.close()
+#         conn.close()
+
+#  # version 2
+# def matrix_omx_tt(projectId):
+#     conn = get_db_connection_pg_neptune()
+#     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+#     try:
+#         query = f'''
+#         SELECT geoid_1, geoid_2, agg_cost as traveltime
+#         FROM avl_modeler_datasets.tl_2019_36_bg_network_{projectId} 
+#         '''
+
+#         cur.execute(query)
+#         traveltime_output = cur.fetchall()
+        
+#         print("traveltime_output---", traveltime_output[:10])
+
+#         geoid_1 = np.unique([d['geoid_1'] for d in traveltime_output])
+#         geoid_2 = np.unique([d['geoid_2'] for d in traveltime_output])
+
+#         traveltimeTable = np.ones((len(geoid_1), len(geoid_2)))
+#         eaTravelTimeTable = np.ones((len(geoid_1), len(geoid_2)))
+#         amTravelTimeTable = np.ones((len(geoid_1), len(geoid_2)))
+#         mdTravelTimeTable = np.ones((len(geoid_1), len(geoid_2)))
+#         pmTravelTimeTable = np.ones((len(geoid_1), len(geoid_2)))
+#         evTravelTimeTable = np.ones((len(geoid_1), len(geoid_2)))
+
+#         for d in traveltime_output:
+#             i = np.where(geoid_1 == d['geoid_1'])[0][0]
+#             j = np.where(geoid_2 == d['geoid_2'])[0][0]
+
+#             traveltimeTable[i, j] = d['traveltime']
+#             eaTravelTimeTable[i, j] = d['traveltime']
+#             amTravelTimeTable[i, j] = d['traveltime']*1.8
+#             mdTravelTimeTable[i, j] = d['traveltime']
+#             pmTravelTimeTable[i, j] = d['traveltime']*1.7
+#             evTravelTimeTable[i, j] = d['traveltime']*1.2
+
+#         cwdpath = os.getcwd()
+#         print("The current working directory is %s" % cwdpath)
+
+#         parent_dir = os.getcwd() + '/popsynth_runs/'
+#         directory = str(projectId)
+#         folder = os.path.join(parent_dir, directory)
+
+
+
+#         ttskims = omx.open_file('popsynth_runs/test_prototype_mtc_new/data/skims.omx', 'w')
+
+#         ttskims['TravelTime'] = traveltimeTable
+       
+
+ 
+#         prototype_skims = omx.open_file('popsynth_runs/test_prototype_mtc/data/skims.omx')
+
+#         table_names_list = prototype_skims.list_matrices()
+
+#         for name in table_names_list:
+#             if "EA" in name:
+#                 if any(x in name for x in ["SOV", "HOV"]):
+#                     ttskims[name] = eaTravelTimeTable
+#                 elif "WLK" in name:
+#                     ttskims[name] = eaTravelTimeTable *1000
+#                 else:
+#                     ttskims[name] = eaTravelTimeTable*100
+#             elif "AM" in name:
+#                 if any(x in name for x in ["SOV", "HOV"]):
+#                     ttskims[name] = amTravelTimeTable
+#                 elif "WLK" in name:
+#                     ttskims[name] = amTravelTimeTable * 1000
+#                 else:
+#                     ttskims[name] = amTravelTimeTable*100
+#             elif "MD" in name:
+#                 if any(x in name for x in ["SOV", "HOV"]):
+#                     ttskims[name] = mdTravelTimeTable
+
+#                 elif "WLK" in name:
+#                     ttskims[name] = mdTravelTimeTable * 1000
+#                 else:
+#                     ttskims[name] = mdTravelTimeTable*100
+#             elif "PM" in name:
+#                 if any(x in name for x in ["SOV", "HOV"]):
+#                     ttskims[name] = pmTravelTimeTable
+
+#                 elif "WLK" in name:
+#                     ttskims[name] = pmTravelTimeTable * 1000
+#                 else:
+#                     ttskims[name] = pmTravelTimeTable*100
+#             elif "EV" in name:
+#                 if any(x in name for x in ["SOV", "HOV"]):
+#                     ttskims[name] = evTravelTimeTable
+#                 elif "WLK" in name:
+#                     ttskims[name] = evTravelTimeTable * 1000
+#                 else:
+#                     ttskims[name] = evTravelTimeTable*100
+#             elif "DISTBIKE" in name:
+#                 ttskims[name] = traveltimeTable 
+#             elif "DISTWALK" in name:
+#                 ttskims[name] = traveltimeTable
+#             elif "BOARDS" in name:
+#                     ttskims[name] = 1
+#             else:
+#                 ttskims[name] = traveltimeTable
+
+#         prototype_skims.close()
+#         ttskims.close()
+
+#         print("OMX file created successfully")
+
+#     except Exception as e:
+#         print(f"Error in matrix_omx_tt: {str(e)}")
+#         raise
+#     finally:
+#         cur.close()
+#         conn.close()
+
+
+# # verson 3
+# def matrix_omx_tt(projectId):
+#     conn = get_db_connection_pg_neptune()
+#     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+#     try:
+#         query = f'''
+#         SELECT geoid_1, geoid_2, agg_cost as traveltime
+#         FROM avl_modeler_datasets.tl_2019_36_bg_network_{projectId} 
+#         '''
+
+#         cur.execute(query)
+#         traveltime_output = cur.fetchall()
+        
+#         print("traveltime_output---", traveltime_output[:10])
+
+#         geoid_1 = np.unique([d['geoid_1'] for d in traveltime_output])
+#         geoid_2 = np.unique([d['geoid_2'] for d in traveltime_output])
+
+#         traveltimeTable = np.ones((len(geoid_1), len(geoid_2)))
+#         eaTravelTimeTable = np.ones((len(geoid_1), len(geoid_2)))
+#         amTravelTimeTable = np.ones((len(geoid_1), len(geoid_2)))
+#         mdTravelTimeTable = np.ones((len(geoid_1), len(geoid_2)))
+#         pmTravelTimeTable = np.ones((len(geoid_1), len(geoid_2)))
+#         evTravelTimeTable = np.ones((len(geoid_1), len(geoid_2)))
+
+#         for d in traveltime_output:
+#             i = np.where(geoid_1 == d['geoid_1'])[0][0]
+#             j = np.where(geoid_2 == d['geoid_2'])[0][0]
+
+#             traveltimeTable[i, j] = d['traveltime']
+#             eaTravelTimeTable[i, j] = d['traveltime']
+#             amTravelTimeTable[i, j] = d['traveltime']*1.8
+#             mdTravelTimeTable[i, j] = d['traveltime']
+#             pmTravelTimeTable[i, j] = d['traveltime']*1.7
+#             evTravelTimeTable[i, j] = d['traveltime']*1.2
+
+#         cwdpath = os.getcwd()
+#         print("The current working directory is %s" % cwdpath)
+
+#         parent_dir = os.getcwd() + '/popsynth_runs/'
+#         directory = str(projectId)
+#         folder = os.path.join(parent_dir, directory)
+
+
+
+#         ttskims = omx.open_file('popsynth_runs/test_prototype_mtc_new/data/skims.omx', 'w')
+
+#         ttskims['TravelTime'] = traveltimeTable
+       
+
+ 
+#         prototype_skims = omx.open_file('popsynth_runs/test_prototype_mtc/data/skims.omx')
+
+#         table_names_list = prototype_skims.list_matrices()
+
+#         for name in table_names_list:
+#             if "EA" in name:
+#                 if any(x in name for x in ["SOV", "HOV"]):
+#                     ttskims[name] = eaTravelTimeTable
+#                 elif "WLK" in name:
+#                     ttskims[name] = eaTravelTimeTable *1000
+#                 else:
+#                     ttskims[name] = eaTravelTimeTable*100
+#             elif "AM" in name:
+#                 if any(x in name for x in ["SOV", "HOV"]):
+#                     ttskims[name] = amTravelTimeTable
+#                 elif "WLK" in name:
+#                     ttskims[name] = amTravelTimeTable * 1000
+#                 else:
+#                     ttskims[name] = amTravelTimeTable*100
+#             elif "MD" in name:
+#                 if any(x in name for x in ["SOV", "HOV"]):
+#                     ttskims[name] = mdTravelTimeTable
+
+#                 elif "WLK" in name:
+#                     ttskims[name] = mdTravelTimeTable * 1000
+#                 else:
+#                     ttskims[name] = mdTravelTimeTable*100
+#             elif "PM" in name:
+#                 if any(x in name for x in ["SOV", "HOV"]):
+#                     ttskims[name] = pmTravelTimeTable
+
+#                 elif "WLK" in name:
+#                     ttskims[name] = pmTravelTimeTable * 1000
+#                 else:
+#                     ttskims[name] = pmTravelTimeTable*100
+#             elif "EV" in name:
+#                 if any(x in name for x in ["SOV", "HOV"]):
+#                     ttskims[name] = evTravelTimeTable
+#                 elif "WLK" in name:
+#                     ttskims[name] = evTravelTimeTable * 1000
+#                 else:
+#                     ttskims[name] = evTravelTimeTable*100
+#             elif "DISTBIKE" in name:
+#                 ttskims[name] = traveltimeTable 
+#             elif "DISTWALK" in name:
+#                 ttskims[name] = traveltimeTable
+
+#             elif "XWAIT" in name:
+#                 ttskims[name] = np.zeros_like(traveltimeTable)
+#             elif "WAUX" in name:
+#                 if "COM" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 300.0)
+#                 else:
+#                     ttskims[name] = np.zeros_like(traveltimeTable)
+#             elif "BTOLL" in name:
+#                 ttskims[name] = np.full_like(traveltimeTable, 134.0)
+#             elif "VTOLL" in name:
+#                 ttskims[name] = np.zeros_like(traveltimeTable)
+#             elif "DIST" in name:
+#                 if any(x in name for x in ["WALK", "BIKE"]):
+#                     ttskims[name] = np.full_like(traveltimeTable, 0.01)
+#                 else:
+#                     ttskims[name] = np.full_like(traveltimeTable, 0.0102)
+#             elif "DDIST" in name:
+#                 if "EA" in name or "EV" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 8.35)
+#                 elif "AM" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 8.47)
+#                 elif "MD" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 8.89)
+#                 elif "PM" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 8.97)
+#             elif "KEYIVT" in name:
+#                 if "COM" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 18.9805)
+#                 else:
+#                     ttskims[name] = np.zeros_like(traveltimeTable)
+#             elif "IWAIT" in name:
+#                 if "AM" in name or "PM" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 1.5171)
+#                 elif "EA" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 3.1642)
+#                 elif "EV" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 2.6571)
+#                 elif "MD" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 1.5471)
+
+#             elif "BOARDS" in name:
+#                 if "COM" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 2.0)
+#                 else:
+#                     ttskims[name] = np.full_like(traveltimeTable, 1.0)
+#             elif "FAR" in name:
+#                 if "EXP" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 139.0)
+#                 elif "COM" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 221.0)
+#                 elif "LOC" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 152.0)
+#                 elif "HVY" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 220.0)
+#             else:
+#                 ttskims[name] = traveltimeTable
+
+#         prototype_skims.close()
+#         ttskims.close()
+
+#         print("OMX file created successfully")
+
+#     except Exception as e:
+#         print(f"Error in matrix_omx_tt: {str(e)}")
+#         raise
+#     finally:
+#         cur.close()
+#         conn.close()
+
+# version 4
+
 def matrix_omx_tt(projectId):
     conn = get_db_connection_pg_neptune()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -1580,74 +1994,98 @@ def matrix_omx_tt(projectId):
 
             traveltimeTable[i, j] = d['traveltime']
             eaTravelTimeTable[i, j] = d['traveltime']
-            amTravelTimeTable[i, j] = d['traveltime']*1.8
+            amTravelTimeTable[i, j] = d['traveltime']
             mdTravelTimeTable[i, j] = d['traveltime']
-            pmTravelTimeTable[i, j] = d['traveltime']*1.7
-            evTravelTimeTable[i, j] = d['traveltime']*1.2
-
-        cwdpath = os.getcwd()
-        print("The current working directory is %s" % cwdpath)
-
-        parent_dir = os.getcwd() + '/popsynth_runs/'
-        directory = str(projectId)
-        folder = os.path.join(parent_dir, directory)
-
-
-    #   creating tt skim
-
-        # full_path = folder + '/output/activitysim_input/ttskims.omx'
-        # dir_path = os.path.dirname(full_path)
-        # if not os.path.exists(dir_path):
-        #     print(f"Directory does not exist: {dir_path}")
-        #     os.makedirs(dir_path, exist_ok=True)
-        #     print(f"Created directory: {dir_path}")
-
-        # if not os.access(dir_path, os.W_OK):
-        #     print(f"No write permission for directory: {dir_path}")
-        #     raise PermissionError(f"No write permission for directory: {dir_path}")
-    
-        # ttskims = omx.open_file(full_path, 'w')
+            pmTravelTimeTable[i, j] = d['traveltime']
+            evTravelTimeTable[i, j] = d['traveltime']
 
         ttskims = omx.open_file('popsynth_runs/test_prototype_mtc_new/data/skims.omx', 'w')
-
         ttskims['TravelTime'] = traveltimeTable
-       
 
- 
         prototype_skims = omx.open_file('popsynth_runs/test_prototype_mtc/data/skims.omx')
-
         table_names_list = prototype_skims.list_matrices()
 
         for name in table_names_list:
-            if "EA" in name:
+            if "BOARDS" in name:
+                ttskims[name] = np.full_like(traveltimeTable, 2.0 if "COM" in name else 1.0)
+            elif "FAR" in name:
+                if "EXP" in name or "LRF" in name:
+                    ttskims[name] = np.full_like(traveltimeTable, 139.0)
+                elif "COM" in name:
+                    ttskims[name] = np.full_like(traveltimeTable, 221.0)
+                elif "LOC" in name:
+                    ttskims[name] = np.full_like(traveltimeTable, 152.0)
+                elif "HVY" in name:
+                    ttskims[name] = np.full_like(traveltimeTable, 220.0)
+            elif "XWAIT" in name:
+                ttskims[name] = np.zeros_like(traveltimeTable)
+            elif "WAUX" in name:
+                if "COM" in name:
+                    ttskims[name] = np.full_like(traveltimeTable, 300.0)
+                elif "HVY" in name:
+                    ttskims[name] = np.full_like(traveltimeTable, 600.0)
+                else:
+                    ttskims[name] = np.zeros_like(traveltimeTable)
+            elif "BTOLL" in name:
+                ttskims[name] = np.full_like(traveltimeTable, 134.0)
+            elif "VTOLL" in name:
+                ttskims[name] = np.zeros_like(traveltimeTable)
+            elif "DIST" in name or "DDIST" in name:
+                if "WALK" in name or "BIKE" in name:
+                    ttskims[name] = np.full_like(traveltimeTable, 0.01)
+                else:
+                    ttskims[name] = np.full_like(traveltimeTable, 0.0102)
+            elif "KEYIVT" in name:
+                if "COM" in name or "HVY" in name:
+                    ttskims[name] = np.full_like(traveltimeTable, 18.9805)
+                else:
+                    ttskims[name] = np.zeros_like(traveltimeTable)
+            elif "IWAIT" in name:
+                if "AM" in name or "PM" in name:
+                    ttskims[name] = np.full_like(traveltimeTable, 1.5171)
+                elif "EA" in name:
+                    ttskims[name] = np.full_like(traveltimeTable, 3.1642)
+                elif "EV" in name:
+                    ttskims[name] = np.full_like(traveltimeTable, 2.6571)
+                elif "MD" in name:
+                    ttskims[name] = np.full_like(traveltimeTable, 1.5471)
+            elif "EA" in name:
                 if any(x in name for x in ["SOV", "HOV"]):
                     ttskims[name] = eaTravelTimeTable
+                elif "WLK" in name:
+                    ttskims[name] = eaTravelTimeTable * 2
                 else:
                     ttskims[name] = eaTravelTimeTable*10
             elif "AM" in name:
                 if any(x in name for x in ["SOV", "HOV"]):
                     ttskims[name] = amTravelTimeTable
+                elif "WLK" in name:
+                    ttskims[name] = amTravelTimeTable * 2
                 else:
                     ttskims[name] = amTravelTimeTable*10
             elif "MD" in name:
                 if any(x in name for x in ["SOV", "HOV"]):
                     ttskims[name] = mdTravelTimeTable
+
+                elif "WLK" in name:
+                    ttskims[name] = mdTravelTimeTable * 2
                 else:
                     ttskims[name] = mdTravelTimeTable*10
             elif "PM" in name:
                 if any(x in name for x in ["SOV", "HOV"]):
                     ttskims[name] = pmTravelTimeTable
+
+                elif "WLK" in name:
+                    ttskims[name] = pmTravelTimeTable * 2
                 else:
                     ttskims[name] = pmTravelTimeTable*10
             elif "EV" in name:
                 if any(x in name for x in ["SOV", "HOV"]):
                     ttskims[name] = evTravelTimeTable
+                elif "WLK" in name:
+                    ttskims[name] = evTravelTimeTable * 2
                 else:
                     ttskims[name] = evTravelTimeTable*10
-            elif "DISTBIKE" in name:
-                ttskims[name] = traveltimeTable * 2.5
-            elif "DISTWALK" in name:
-                ttskims[name] = traveltimeTable * 10
             else:
                 ttskims[name] = traveltimeTable
 
@@ -1662,6 +2100,135 @@ def matrix_omx_tt(projectId):
     finally:
         cur.close()
         conn.close()
+
+
+
+@app.route('/omx_to_csv/<project_id>')
+def omx_to_csv(project_id):
+    try:
+        # Open the OMX file
+        omx_file = omx.open_file('popsynth_runs/test_prototype_mtc/data/skims.omx', 'r')
+        
+        # Get list of all matrices
+        matrix_names = omx_file.list_matrices()
+        
+        # Create output directory if it doesn't exist
+        parent_dir = os.getcwd() + '/popsynth_runs/'
+        project_folder = os.path.join(parent_dir, str(project_id))
+        csv_folder = os.path.join(project_folder, 'skims_csv')
+        os.makedirs(csv_folder, exist_ok=True)
+        
+        # Convert each matrix to CSV
+        for matrix_name in matrix_names:
+            # Get the matrix data
+            matrix_data = omx_file[matrix_name]
+            
+            # Convert to pandas DataFrame
+            df = pd.DataFrame(matrix_data)
+            
+            # Save to CSV
+            csv_path = os.path.join(csv_folder, f'{matrix_name}.csv')
+            df.to_csv(csv_path, index=True)
+            
+        omx_file.close()
+        
+        return jsonify({
+            "message": "OMX file successfully converted to CSV",
+            "output_directory": csv_folder,
+            "matrices_converted": matrix_names
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "error": str(e),
+            "message": "Failed to convert OMX file to CSV"
+        }), 500
+
+
+@app.route('/create_table_names_csv/<project_id>')
+def create_table_names_csv(project_id):
+    try:
+        parent_dir = os.getcwd() + '/popsynth_runs/'
+        project_folder = os.path.join(parent_dir, str(project_id))
+        input_omx_path = 'popsynth_runs/test_prototype_mtc/data/skims.omx'
+        csv_file_path = os.path.join(project_folder, 'table_names_list.csv')
+
+        # Open the OMX file and get the table names
+        with omx.open_file(input_omx_path, 'r') as prototype_skims:
+            table_names_list = prototype_skims.list_matrices()
+
+        # Ensure the project folder exists
+        os.makedirs(project_folder, exist_ok=True)
+
+        # Write the table names to a CSV file
+        with open(csv_file_path, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(['Table Names'])  # Header
+            for name in table_names_list:
+                writer.writerow([name])
+
+        print(f"Table names list saved to {csv_file_path}")
+        return csv_file_path
+
+    except Exception as e:
+        print(f"Error in create_table_names_csv: {str(e)}")
+        raise
+
+
+
+@app.route('/process_csv_files/<project_id>')
+def process_csv_files(project_id):
+    results = {}
+
+    parent_dir = os.getcwd() + '/popsynth_runs/'
+    project_folder = os.path.join(parent_dir, str(project_id))
+    directory = os.path.join(project_folder, 'skims_csv')
+
+    
+
+    for filename in os.listdir(directory):
+        if filename.endswith('.csv'):
+            file_path = os.path.join(directory, filename)
+            df = pd.read_csv(file_path)
+            
+            # Remove the file extension from the name
+            table_name = os.path.splitext(filename)[0]
+            
+            # Calculate a representative value based on the table type
+            if 'DIST' in table_name or 'DDIST' in table_name:
+                value = np.median(df.values.flatten()) / 100  # Convert to miles
+            elif 'TIME' in table_name or 'IVT' in table_name or 'WAIT' in table_name:
+                value = np.median(df.values.flatten()) / 100  # Convert to minutes
+            elif 'TOLL' in table_name or 'FAR' in table_name:
+                value = np.median(df.values.flatten())  # Keep as cents
+            elif 'BOARDS' in table_name:
+                value = np.median(df.values.flatten())  # Keep as is
+            else:
+                value = np.median(df.values.flatten())  # Default to median
+            
+            results[table_name] = value
+    
+    return results
+
+
+
+@app.route('/insert_csv_psql/')
+def insert_senario_run():
+
+    parent_dir = os.getcwd() + '/popsynth_runs/test_prototype_mtc_original/'
+
+    df_trips = pd.read_csv(parent_dir + '/output/final_trips.csv', sep=',',
+                             error_bad_lines=False, index_col=False, dtype='unicode')
+
+    engine = create_engine('postgresql+psycopg2://dama_dev_user:57e5b991-630f-4ca8-8078-f552744a2cf1@mercury.availabs.org:5532/kari')
+
+    # Drop data into database
+    df_trips.to_sql(f"prototype_mtc_senario_trips", engine, schema='avl_modeler_senarios', if_exists='replace', index=False)
+
+
+    return "orignalActivitySim trips table succeefully inserted to database"
+
+
 
 
 
