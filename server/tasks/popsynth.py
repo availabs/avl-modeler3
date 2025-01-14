@@ -378,11 +378,14 @@ def create_landuse_table(project_id, selectedBGs, folder):
     df_households = pd.DataFrame(households_data)
     df_households = df_households.loc[df_households["NP"] != "0"]
     df_households.fillna(0, inplace=True)
+    df_households["VEH"] = df_households["VEH"].astype(float).add(5).astype(str)
+    df_households["WIF"] = df_households["WIF"].astype(float).add(1).astype(str)
     df_households.to_csv(os.path.join(path, 'households.csv'), index=False)
 
     df_persons = pd.DataFrame(persons_data)
     df_persons["PERID"] = df_persons.index + 1
     df_persons["ptype"] = df_persons["ptype"].fillna(value=4)
+    df_persons["AGEP"] = df_persons["AGEP"].astype(float).add(20).astype(str)
     df_persons["pstudent"] = df_persons["pstudent"].fillna(value=3)
     df_persons["pemploy"] = df_persons["pemploy"].fillna(value=3)
 

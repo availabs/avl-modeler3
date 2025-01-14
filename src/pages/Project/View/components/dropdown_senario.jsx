@@ -48,17 +48,8 @@ const Dropdown = ({
 
     const senarioTripmodeKeys = [
       "BIKE",
-      "DRIVEALONEFREE",
       "DRIVEALONEPAY",
-      "DRIVE_COM",
-      "DRIVE_EXP",
-      "DRIVE_HVY",
       "DRIVE_LOC",
-      "DRIVE_LRF",
-      "SHARED2FREE",
-      "SHARED2PAY",
-      "SHARED3FREE",
-      "SHARED3PAY",
       "TAXI",
       "TNC_SHARED",
       "TNC_SINGLE",
@@ -69,6 +60,30 @@ const Dropdown = ({
       "WALK_LOC",
       "WALK_LRF",
     ];
+
+    // const senarioTripmodeKeys = [
+    //   "BIKE",
+    //   "DRIVEALONEFREE",
+    //   "DRIVEALONEPAY",
+    //   "DRIVE_COM",
+    //   "DRIVE_EXP",
+    //   "DRIVE_HVY",
+    //   "DRIVE_LOC",
+    //   "DRIVE_LRF",
+    //   "SHARED2FREE",
+    //   "SHARED2PAY",
+    //   "SHARED3FREE",
+    //   "SHARED3PAY",
+    //   "TAXI",
+    //   "TNC_SHARED",
+    //   "TNC_SINGLE",
+    //   "WALK",
+    //   "WALK_COM",
+    //   "WALK_EXP",
+    //   "WALK_HVY",
+    //   "WALK_LOC",
+    //   "WALK_LRF",
+    // ];
 
 
     const senarioPurposeKeys = [

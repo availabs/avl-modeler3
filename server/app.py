@@ -1738,39 +1738,39 @@ def createskim_traveltime():
 #                 if any(x in name for x in ["SOV", "HOV"]):
 #                     ttskims[name] = eaTravelTimeTable
 #                 elif "WLK" in name:
-#                     ttskims[name] = eaTravelTimeTable *1000
+#                     ttskims[name] = eaTravelTimeTable *10000
 #                 else:
-#                     ttskims[name] = eaTravelTimeTable*100
+#                     ttskims[name] = eaTravelTimeTable*1000
 #             elif "AM" in name:
 #                 if any(x in name for x in ["SOV", "HOV"]):
 #                     ttskims[name] = amTravelTimeTable
 #                 elif "WLK" in name:
-#                     ttskims[name] = amTravelTimeTable * 1000
+#                     ttskims[name] = amTravelTimeTable * 10000
 #                 else:
-#                     ttskims[name] = amTravelTimeTable*100
+#                     ttskims[name] = amTravelTimeTable*1000
 #             elif "MD" in name:
 #                 if any(x in name for x in ["SOV", "HOV"]):
 #                     ttskims[name] = mdTravelTimeTable
 
 #                 elif "WLK" in name:
-#                     ttskims[name] = mdTravelTimeTable * 1000
+#                     ttskims[name] = mdTravelTimeTable * 10000
 #                 else:
-#                     ttskims[name] = mdTravelTimeTable*100
+#                     ttskims[name] = mdTravelTimeTable*1000
 #             elif "PM" in name:
 #                 if any(x in name for x in ["SOV", "HOV"]):
 #                     ttskims[name] = pmTravelTimeTable
 
 #                 elif "WLK" in name:
-#                     ttskims[name] = pmTravelTimeTable * 1000
+#                     ttskims[name] = pmTravelTimeTable * 10000
 #                 else:
-#                     ttskims[name] = pmTravelTimeTable*100
+#                     ttskims[name] = pmTravelTimeTable*1000
 #             elif "EV" in name:
 #                 if any(x in name for x in ["SOV", "HOV"]):
 #                     ttskims[name] = evTravelTimeTable
 #                 elif "WLK" in name:
-#                     ttskims[name] = evTravelTimeTable * 1000
+#                     ttskims[name] = evTravelTimeTable * 10000
 #                 else:
-#                     ttskims[name] = evTravelTimeTable*100
+#                     ttskims[name] = evTravelTimeTable*1000
 #             elif "DISTBIKE" in name:
 #                 ttskims[name] = traveltimeTable 
 #             elif "DISTWALK" in name:
@@ -1963,6 +1963,147 @@ def createskim_traveltime():
 
 # version 4
 
+# def matrix_omx_tt(projectId):
+#     conn = get_db_connection_pg_neptune()
+#     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+#     try:
+#         query = f'''
+#         SELECT geoid_1, geoid_2, agg_cost as traveltime
+#         FROM avl_modeler_datasets.tl_2019_36_bg_network_{projectId} 
+#         '''
+
+#         cur.execute(query)
+#         traveltime_output = cur.fetchall()
+        
+#         print("traveltime_output---", traveltime_output[:10])
+
+#         geoid_1 = np.unique([d['geoid_1'] for d in traveltime_output])
+#         geoid_2 = np.unique([d['geoid_2'] for d in traveltime_output])
+
+#         traveltimeTable = np.ones((len(geoid_1), len(geoid_2)))
+#         eaTravelTimeTable = np.ones((len(geoid_1), len(geoid_2)))
+#         amTravelTimeTable = np.ones((len(geoid_1), len(geoid_2)))
+#         mdTravelTimeTable = np.ones((len(geoid_1), len(geoid_2)))
+#         pmTravelTimeTable = np.ones((len(geoid_1), len(geoid_2)))
+#         evTravelTimeTable = np.ones((len(geoid_1), len(geoid_2)))
+
+#         for d in traveltime_output:
+#             i = np.where(geoid_1 == d['geoid_1'])[0][0]
+#             j = np.where(geoid_2 == d['geoid_2'])[0][0]
+
+#             traveltimeTable[i, j] = d['traveltime']
+#             eaTravelTimeTable[i, j] = d['traveltime']
+#             amTravelTimeTable[i, j] = d['traveltime']
+#             mdTravelTimeTable[i, j] = d['traveltime']
+#             pmTravelTimeTable[i, j] = d['traveltime']
+#             evTravelTimeTable[i, j] = d['traveltime']
+
+#         ttskims = omx.open_file('popsynth_runs/test_prototype_mtc_new/data/skims.omx', 'w')
+#         ttskims['TravelTime'] = traveltimeTable
+
+#         prototype_skims = omx.open_file('popsynth_runs/test_prototype_mtc/data/skims.omx')
+#         table_names_list = prototype_skims.list_matrices()
+
+#         for name in table_names_list:
+#             if "BOARDS" in name:
+#                 ttskims[name] = np.full_like(traveltimeTable, 2.0 if "COM" in name else 1.0)
+#             elif "FAR" in name:
+#                 if "EXP" in name or "LRF" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 139.0)
+#                 elif "COM" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 221.0)
+#                 elif "LOC" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 152.0)
+#                 elif "HVY" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 220.0)
+#             elif "XWAIT" in name:
+#                 ttskims[name] = np.zeros_like(traveltimeTable)
+#             elif "WAUX" in name:
+#                 if "COM" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 300.0)
+#                 elif "HVY" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 600.0)
+#                 else:
+#                     ttskims[name] = np.zeros_like(traveltimeTable)
+#             elif "BTOLL" in name:
+#                 ttskims[name] = np.full_like(traveltimeTable, 134.0)
+#             elif "VTOLL" in name:
+#                 ttskims[name] = np.zeros_like(traveltimeTable)
+#             elif "DIST" in name or "DDIST" in name:
+#                 if "WALK" in name or "BIKE" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 0.01)
+#                 else:
+#                     ttskims[name] = np.full_like(traveltimeTable, 0.0102)
+#             elif "KEYIVT" in name:
+#                 if "COM" in name or "HVY" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 18.9805)
+#                 else:
+#                     ttskims[name] = np.zeros_like(traveltimeTable)
+#             elif "IWAIT" in name:
+#                 if "AM" in name or "PM" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 1.5171)
+#                 elif "EA" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 3.1642)
+#                 elif "EV" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 2.6571)
+#                 elif "MD" in name:
+#                     ttskims[name] = np.full_like(traveltimeTable, 1.5471)
+#             elif "EA" in name:
+#                 if any(x in name for x in ["SOV", "HOV"]):
+#                     ttskims[name] = eaTravelTimeTable
+#                 elif "WLK" in name:
+#                     ttskims[name] = eaTravelTimeTable * 2
+#                 else:
+#                     ttskims[name] = eaTravelTimeTable*10
+#             elif "AM" in name:
+#                 if any(x in name for x in ["SOV", "HOV"]):
+#                     ttskims[name] = amTravelTimeTable
+#                 elif "WLK" in name:
+#                     ttskims[name] = amTravelTimeTable * 2
+#                 else:
+#                     ttskims[name] = amTravelTimeTable*10
+#             elif "MD" in name:
+#                 if any(x in name for x in ["SOV", "HOV"]):
+#                     ttskims[name] = mdTravelTimeTable
+
+#                 elif "WLK" in name:
+#                     ttskims[name] = mdTravelTimeTable * 2
+#                 else:
+#                     ttskims[name] = mdTravelTimeTable*10
+#             elif "PM" in name:
+#                 if any(x in name for x in ["SOV", "HOV"]):
+#                     ttskims[name] = pmTravelTimeTable
+
+#                 elif "WLK" in name:
+#                     ttskims[name] = pmTravelTimeTable * 2
+#                 else:
+#                     ttskims[name] = pmTravelTimeTable*10
+#             elif "EV" in name:
+#                 if any(x in name for x in ["SOV", "HOV"]):
+#                     ttskims[name] = evTravelTimeTable
+#                 elif "WLK" in name:
+#                     ttskims[name] = evTravelTimeTable * 2
+#                 else:
+#                     ttskims[name] = evTravelTimeTable*10
+#             else:
+#                 ttskims[name] = traveltimeTable
+
+#         prototype_skims.close()
+#         ttskims.close()
+
+#         print("OMX file created successfully")
+
+#     except Exception as e:
+#         print(f"Error in matrix_omx_tt: {str(e)}")
+#         raise
+#     finally:
+#         cur.close()
+#         conn.close()
+
+# version 5
+
+
 def matrix_omx_tt(projectId):
     conn = get_db_connection_pg_neptune()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -1992,12 +2133,12 @@ def matrix_omx_tt(projectId):
             i = np.where(geoid_1 == d['geoid_1'])[0][0]
             j = np.where(geoid_2 == d['geoid_2'])[0][0]
 
-            traveltimeTable[i, j] = d['traveltime']
-            eaTravelTimeTable[i, j] = d['traveltime']
-            amTravelTimeTable[i, j] = d['traveltime']
-            mdTravelTimeTable[i, j] = d['traveltime']
-            pmTravelTimeTable[i, j] = d['traveltime']
-            evTravelTimeTable[i, j] = d['traveltime']
+            traveltimeTable[i, j] = d['traveltime']*10
+            eaTravelTimeTable[i, j] = d['traveltime']*100
+            amTravelTimeTable[i, j] = d['traveltime']*300
+            mdTravelTimeTable[i, j] = d['traveltime']*100
+            pmTravelTimeTable[i, j] = d['traveltime']*200
+            evTravelTimeTable[i, j] = d['traveltime']*100
 
         ttskims = omx.open_file('popsynth_runs/test_prototype_mtc_new/data/skims.omx', 'w')
         ttskims['TravelTime'] = traveltimeTable
@@ -2053,39 +2194,39 @@ def matrix_omx_tt(projectId):
                 if any(x in name for x in ["SOV", "HOV"]):
                     ttskims[name] = eaTravelTimeTable
                 elif "WLK" in name:
-                    ttskims[name] = eaTravelTimeTable * 2
+                    ttskims[name] = eaTravelTimeTable 
                 else:
-                    ttskims[name] = eaTravelTimeTable*10
+                    ttskims[name] = eaTravelTimeTable
             elif "AM" in name:
                 if any(x in name for x in ["SOV", "HOV"]):
                     ttskims[name] = amTravelTimeTable
                 elif "WLK" in name:
-                    ttskims[name] = amTravelTimeTable * 2
+                    ttskims[name] = amTravelTimeTable 
                 else:
-                    ttskims[name] = amTravelTimeTable*10
+                    ttskims[name] = amTravelTimeTable
             elif "MD" in name:
                 if any(x in name for x in ["SOV", "HOV"]):
                     ttskims[name] = mdTravelTimeTable
 
                 elif "WLK" in name:
-                    ttskims[name] = mdTravelTimeTable * 2
+                    ttskims[name] = mdTravelTimeTable
                 else:
-                    ttskims[name] = mdTravelTimeTable*10
+                    ttskims[name] = mdTravelTimeTable
             elif "PM" in name:
                 if any(x in name for x in ["SOV", "HOV"]):
                     ttskims[name] = pmTravelTimeTable
 
                 elif "WLK" in name:
-                    ttskims[name] = pmTravelTimeTable * 2
+                    ttskims[name] = pmTravelTimeTable
                 else:
-                    ttskims[name] = pmTravelTimeTable*10
+                    ttskims[name] = pmTravelTimeTable
             elif "EV" in name:
                 if any(x in name for x in ["SOV", "HOV"]):
                     ttskims[name] = evTravelTimeTable
                 elif "WLK" in name:
-                    ttskims[name] = evTravelTimeTable * 2
+                    ttskims[name] = evTravelTimeTable
                 else:
-                    ttskims[name] = evTravelTimeTable*10
+                    ttskims[name] = evTravelTimeTable
             else:
                 ttskims[name] = traveltimeTable
 
@@ -2100,7 +2241,6 @@ def matrix_omx_tt(projectId):
     finally:
         cur.close()
         conn.close()
-
 
 
 @app.route('/omx_to_csv/<project_id>')

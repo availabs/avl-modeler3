@@ -89,7 +89,7 @@ const Dropdown = ({ varList, projectId, selectedBlockGroups, bgIds}) => {
           onClick={sendNetworkBgIds}
           disabled={isLoading}
         >
-          {isLoading ? "Creating Skim table..." : "Create Skim table"}
+          {isLoading ? "Creating ttSkim table..." : "Create TTSkim table"}
         </button>
 
       </div>
